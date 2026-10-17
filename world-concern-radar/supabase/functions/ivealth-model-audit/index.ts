@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.0";
 
 const headers = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-workspace-id",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Content-Type": "application/json; charset=utf-8",
 };
@@ -21,18 +21,10 @@ Deno.serve(async (req: Request) => {
     return reply({ error: "Server Supabase configuration is incomplete." }, 500);
   }
 
-  const authHeader = req.headers.get("Authorization") ?? "";
-  const token = authHeader.replace(/^Bearer\s+/i, "");
-  if (!token || token === authHeader) {
-    return reply({ error: "A valid Supabase user access token is required." }, 401);
+  const workspaceId = req.headers.get("x-workspace-id") ?? "";
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(workspaceId)) {
+    return reply({ error: "Workspace ID is missing or invalid. Reload the page and retry." }, 400);
   }
-
-  const authClient = createClient(supabaseUrl, anonKey, {
-    auth: { persistSession: false, autoRefreshToken: false },
-    global: { headers: { Authorization: `Bearer ${token}` } },
-  });
-  const { data: userData, error: authError } = await authClient.auth.getUser(token);
-  if (authError || !userData.user) return reply({ error: "Authentication failed." }, 401);
 
   const body = await req.json().catch(() => null);
   const jobId = typeof body?.job_id === "string" ? body.job_id.trim() : "";
@@ -63,9 +55,9 @@ Deno.serve(async (req: Request) => {
   });
   const { data: job, error: jobError } = await db
     .from("research_jobs")
-    .select("id,user_id,title,status,provider,model,result,created_at,completed_at")
+    .select("id,guest_id,title,status,provider,model,result,created_at,completed_at")
     .eq("id", jobId)
-    .eq("user_id", userData.user.id)
+    .eq("guest_id", workspaceId)
     .maybeSingle();
   if (jobError) return reply({ error: "Could not load research job." }, 500);
   if (!job) return reply({ error: "Research job not found." }, 404);
@@ -177,7 +169,7 @@ ${artifactJson.slice(0, 70000)}`;
       .from("research_jobs")
       .update({ result: updatedResult, updated_at: new Date().toISOString() })
       .eq("id", job.id)
-      .eq("user_id", userData.user.id)
+      .eq("guest_id", workspaceId)
       .select("id,title,status,model,result,updated_at")
       .single();
     if (updateError || !updated) return reply({ error: "Audit completed but could not be saved." }, 500);
