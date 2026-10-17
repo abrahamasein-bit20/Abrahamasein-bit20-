@@ -186,6 +186,7 @@ export default function Home() {
     <aside className="side-rail">
       <div className="brand-lockup"><div className="brand-mark">i</div><div><div className="brand-name">iValth</div><div className="brand-sub">RESEARCH STUDIO</div></div></div>
       <div className="rail-label">WORKSPACE</div>
+      <a href="/model-audit" className="primary-nav-item" style={{ textDecoration: "none" }}>AI research audit</a>
       <nav className="primary-nav" aria-label="Main navigation">
         {mainNav.filter(item => item.label === "Overview" || item.label === "Research runs" || item.label === "Product Development Box").map(item => <NavButton key={item.label} item={item} active={view === item.label} onClick={() => goto(item.label)} />)}
       </nav>
