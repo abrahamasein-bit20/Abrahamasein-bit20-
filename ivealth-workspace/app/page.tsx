@@ -188,9 +188,6 @@ export default function Home() {
         <span className="studio-brand-mark-v2">iv</span>
         <span className="studio-brand-copy-v2"><strong>iValth</strong><small>WELLBEING INTELLIGENCE</small></span>
       </button>
-      <nav className="studio-primary-nav-v2" aria-label="Workspace navigation">
-        {mainNav.map(item => <NavButton key={item.label} item={item} active={view === item.label} onClick={() => goto(item.label)} />)}
-      </nav>
       <div className="studio-topbar-actions-v2">
         <button className="studio-icon-action-v2" onClick={() => setTheme(v => v === "dark" ? "light" : "dark")} aria-label={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"} title={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}>{theme === "dark" ? <Sun size={17}/> : <Moon size={17}/>}</button>
         <a href="/research-engine" className="studio-engine-link-v2"><FlaskConical size={16}/><span>AI Research Engine</span><ArrowRight size={14}/></a>
@@ -261,9 +258,6 @@ function StageProgress({stage}:{stage:StageKey}) {
  return <div className="stage-progress" aria-label={"Current stage "+(idx+1)+" of 5"}>{stageList.map((s,i)=><div key={s.key} className={"stage-progress-step "+(i<idx?"complete ":i===idx?"current":"")}><span className="progress-node">{i<idx?<Check size={13}/>:s.number}</span><span className="progress-caption">{s.short}</span></div>)}</div>;
 }
 function OverviewView({runs,activeRun,onCreate,onOpen,onViewRuns,onImport,importBusy,onContinue}:{runs:Run[];activeRun:Run|null;onCreate:()=>void;onOpen:(r:Run)=>void;onViewRuns:()=>void;onImport:(e:ChangeEvent<HTMLInputElement>)=>void;importBusy:boolean;onContinue:()=>void}) {
- const completedDecisions = runs.reduce((sum, run) => sum + run.decisions.length, 0);
- const candidateCount = runs.reduce((sum, run) => sum + run.concerns.length, 0);
- const selectedCount = runs.reduce((sum, run) => sum + run.concerns.filter(c => c.selected).length, 0);
  const activeStage = activeRun ? stageFor(activeRun.stage) : null;
  return <div className="studio-dashboard-v2">
   <section className="studio-dashboard-heading-v2">
@@ -272,18 +266,6 @@ function OverviewView({runs,activeRun,onCreate,onOpen,onViewRuns,onImport,import
     <h1>Find the human problem.<br/><em>Prove it matters.</em></h1>
     <p>Trace concerns from early signals to validated opportunities. Keep observed harm, public worry, modelled exposure and solution performance separate.</p>
    </div>
-   <div className="studio-heading-aside-v2">
-    <span className="studio-heading-aside-label-v2">RESEARCH STANDARD</span>
-    <strong>Evidence before opportunity.</strong>
-    <span>Source traceability · Counterevidence · Human decision gates</span>
-   </div>
-  </section>
-
-  <section className="studio-metric-grid-v2" aria-label="Research workspace summary">
-   <article className="studio-metric-card-v2 studio-metric-primary-v2"><span className="studio-metric-label-v2">RESEARCH RUNS</span><strong>{runs.length.toString().padStart(2,"0")}</strong><small>Scopes being investigated</small><span className="studio-metric-icon-v2"><FolderOpen size={19}/></span></article>
-   <article className="studio-metric-card-v2"><span className="studio-metric-label-v2">CANDIDATE PROBLEMS</span><strong>{candidateCount.toString().padStart(2,"0")}</strong><small>Not automatically validated</small><span className="studio-metric-icon-v2"><Activity size={19}/></span></article>
-   <article className="studio-metric-card-v2"><span className="studio-metric-label-v2">SELECTED FOR REVIEW</span><strong>{selectedCount.toString().padStart(2,"0")}</strong><small>Chosen for deeper assessment</small><span className="studio-metric-icon-v2"><Target size={19}/></span></article>
-   <article className="studio-metric-card-v2"><span className="studio-metric-label-v2">HUMAN DECISIONS</span><strong>{completedDecisions.toString().padStart(2,"0")}</strong><small>Recorded in this browser</small><span className="studio-metric-icon-v2"><ClipboardCheck size={19}/></span></article>
   </section>
 
   <section className="studio-dashboard-grid-v2">
