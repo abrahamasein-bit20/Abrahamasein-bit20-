@@ -274,3 +274,22 @@
     scroll-behavior: auto !important;
   }
 }
+
+.research-engine-page .engine-capabilities {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 18px;
+}
+.research-engine-page .engine-capabilities span {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  border: 1px solid rgba(214,245,241,.24);
+  border-radius: 999px;
+  background: rgba(255,255,255,.075);
+  color: #e0f2f1;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .01em;
+}
