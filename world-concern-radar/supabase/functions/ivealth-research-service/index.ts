@@ -150,6 +150,7 @@ Keep source_ids consistent. If no credible source can be verified, return an emp
     }
 
     const reviewModel = Deno.env.get("OPENROUTER_REVIEW_MODEL") || "nvidia/nemotron-3-ultra-550b-a55b:free";
+    if (!reviewModel.endsWith(":free")) return reply({ error: "The review endpoint requires an explicitly free model ID." }, 503);
     const auditPrompt = `Audit the supplied iValth World Concern Radar record as a skeptical, non-approving reviewer. This is a STRUCTURAL AND EVIDENCE-TRACEABILITY REVIEW, not a new research run.
 Rules:
 - Do not invent sources, findings, quotes, URLs, publication dates, population sizes, trend values, or facts that are absent from the input.
