@@ -703,3 +703,75 @@ html[data-theme="dark"] .empty-state p { color: #b4c2d5; }
 html[data-theme="dark"] .run-row:hover,
 html[data-theme="dark"] .mobile-more-menu button:hover { background: #172f3b; }
 html[data-theme="dark"] .overview-gate { border-color: var(--line); }
+
+
+/* Open-weight model audit view */
+.model-audit-route { max-width: 1500px; }
+.model-audit-back-link { display: inline-flex; align-items: center; width: fit-content; margin-bottom: 18px; color: var(--pine); font-size: 14px; font-weight: 700; }
+.model-audit-back-link:hover { text-decoration: underline; }
+.model-audit-view { gap: 20px; }
+.model-audit-panel { min-width: 0; }
+.model-audit-panel > h2 { margin: 0 0 8px; font-family: Manrope, sans-serif; font-size: 21px; letter-spacing: -.45px; }
+.model-audit-panel > p { color: var(--muted); line-height: 1.6; }
+.model-audit-form { display: grid; gap: 16px; margin-top: 20px; }
+.model-audit-form input, .model-audit-form textarea, .model-audit-form select {
+  width: 100%; min-width: 0; border: 1px solid var(--line-strong); border-radius: 10px;
+  background: var(--surface); color: var(--ink); padding: 11px 12px; line-height: 1.5;
+}
+.model-audit-form textarea { resize: vertical; }
+.model-audit-form input:focus, .model-audit-form textarea:focus, .model-audit-form select:focus { border-color: var(--pine); }
+.model-audit-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin-top: 8px; }
+.model-audit-actions > span { color: var(--muted); font-size: 12px; line-height: 1.6; }
+.model-audit-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px; }
+.model-audit-full { grid-column: 1 / -1; }
+.model-audit-status-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 14px; }
+.model-audit-status { display: grid; align-content: start; gap: 8px; }
+.model-audit-status > span { color: var(--muted); font-size: 12px; font-weight: 800; letter-spacing: .7px; text-transform: uppercase; }
+.model-audit-status > strong { font-family: Manrope,sans-serif; font-size: 18px; }
+.model-audit-status > p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.5; overflow-wrap: anywhere; }
+.model-audit-results-grid { display: grid; grid-template-columns: minmax(280px,.85fr) minmax(0,1.15fr); gap: 18px; align-items: start; }
+.model-audit-job-list { display: grid; gap: 8px; margin-top: 16px; }
+.model-audit-job { display: grid; gap: 8px; width: 100%; padding: 13px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--ink); text-align: left; }
+.model-audit-job:hover { border-color: var(--line-strong); background: var(--surface-soft); }
+.model-audit-job.selected { border-color: var(--pine); box-shadow: inset 3px 0 0 var(--pine); }
+.model-audit-job > span:first-child { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.model-audit-job strong { min-width: 0; font-size: 14px; line-height: 1.45; }
+.model-audit-job small { color: var(--muted); font-size: 12px; }
+.model-audit-job p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.5; }
+.job-status { display: inline-flex; flex-shrink: 0; padding: 4px 7px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); background: var(--surface-soft); font-size: 10px; font-weight: 800; text-transform: uppercase; }
+.job-status-complete { color: #18724d; background: #eaf6ef; border-color: #c8e7d3; }
+.job-status-complete_with_limitations { color: #854d0e; background: #fff7e6; border-color: #f3d6a2; }
+.job-status-failed { color: #991b1b; background: #fee2e2; border-color: #fecaca; }
+.model-audit-detail { display: grid; gap: 14px; }
+.model-audit-detail h3 { margin: 6px 0; font-size: 18px; }
+.model-audit-detail > p { color: var(--muted); line-height: 1.6; }
+.model-audit-job-meta { display: flex; flex-wrap: wrap; gap: 12px 20px; padding: 12px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); font-size: 13px; color: var(--muted); }
+.model-audit-review { padding: 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-soft); }
+.model-audit-review > p { line-height: 1.6; }
+.model-audit-review > p:last-of-type { margin-bottom: 0; }
+.model-audit-json { max-height: 420px; overflow: auto; padding: 13px; background: #101d2b; color: #e2e8f0; border-radius: 9px; font: 12px/1.6 ui-monospace,SFMono-Regular,Menlo,monospace; white-space: pre-wrap; overflow-wrap: anywhere; }
+.model-audit-result-json, .model-audit-review details { padding-top: 5px; }
+.model-audit-view details > summary { cursor: pointer; color: var(--pine); font-size: 13px; font-weight: 700; }
+.model-audit-empty { margin-top: 14px; padding: 18px; border: 1px dashed var(--line-strong); border-radius: 10px; color: var(--muted); font-size: 13px; line-height: 1.6; }
+.model-audit-warning { padding: 12px; background: #fff7e6; border: 1px solid #f3d6a2; border-radius: 9px; color: #854d0e; font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }
+html[data-theme="dark"] .model-audit-form input,
+html[data-theme="dark"] .model-audit-form textarea,
+html[data-theme="dark"] .model-audit-form select,
+html[data-theme="dark"] .model-audit-job { background: var(--surface); color: var(--ink); }
+html[data-theme="dark"] .model-audit-review { background: var(--surface-soft); }
+html[data-theme="dark"] .model-audit-warning { background: #3b2d16; color: #fcdba1; border-color: #705121; }
+html[data-theme="dark"] .job-status-complete { color: #a7f3d0; background: #123b2f; border-color: #16634a; }
+html[data-theme="dark"] .job-status-complete_with_limitations { color: #fde68a; background: #3b2d16; border-color: #705121; }
+html[data-theme="dark"] .job-status-failed { color: #fecaca; background: #421f2a; border-color: #783b47; }
+@media (max-width: 1050px) {
+  .model-audit-results-grid { grid-template-columns: minmax(0,1fr); }
+}
+@media (max-width: 720px) {
+  .model-audit-route { padding-left: 16px; padding-right: 16px; padding-top: 18px; }
+  .model-audit-status-grid { grid-template-columns: minmax(0,1fr); }
+  .model-audit-grid { grid-template-columns: minmax(0,1fr); }
+  .model-audit-full { grid-column: auto; }
+  .model-audit-actions { align-items: stretch; flex-direction: column; }
+  .model-audit-actions .primary-button { width: 100%; }
+  .model-audit-job > span:first-child { flex-direction: column; align-items: flex-start; }
+}
