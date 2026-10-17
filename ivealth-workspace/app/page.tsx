@@ -197,7 +197,7 @@ export default function Home() {
       })}</nav>
       <div className="rail-bottom">
         <div className="rail-bottom-title"><ShieldAlert size={15}/> Prototype mode</div>
-        <p>Records stay in this browser. Authentication and shared database sync are not enabled.</p>
+        <p>Research Studio runs stay in this browser. Use AI Research Engine for authenticated API research jobs.</p>
         <div className="rail-storage"><span/> Browser storage active</div>
       </div>
     </aside>
@@ -210,6 +210,7 @@ export default function Home() {
         <div className="toolbar-actions">
           <button className="theme-toggle" onClick={() => setTheme(v => v === "dark" ? "light" : "dark")} aria-label={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"} title={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}>{theme === "dark" ? <Sun size={16}/> : <Moon size={16}/>}<span>{theme === "dark" ? "Light mode" : "Dark mode"}</span></button>
           {activeRun && <button className="subtle-button" onClick={exportRun}><FileJson size={15}/> Export run</button>}
+          <a href="/research-engine" className="subtle-button" style={{ textDecoration: "none" }}><FlaskConical size={15}/> <span>AI Research Engine</span></a>
           <button className="primary-button" onClick={openCreate}><Plus size={17}/> <span>New research run</span></button>
         </div>
       </header>
