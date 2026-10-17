@@ -126,6 +126,13 @@ The source requires every POST request to include `confirm_external_processing: 
 - Do not combine experienced harm, reported worry, modelled exposure, behavior and solution performance into one undifferentiated score.
 - Do not describe a limited free quota as a production-grade free service.
 
-## Current status
+## Current status — 2026-10-17
 
-This file records the GitHub review and recommended architecture. It does not claim that any new model has been embedded, configured, or end-to-end tested. The current research service remains based on the Responses API plus web search until a separately tested provider integration is implemented and approved.
+- **Supabase audit function:** `ivealth-model-audit` has been deployed to the selected project as version 1 with JWT verification enabled. It is separate from the primary research service. It returns a configuration-required response until `MODEL_AUDIT_API_KEY` and `MODEL_AUDIT_MODEL` are available. I did not set or inspect provider secrets.
+- **Research UI:** a signed-in `/research-engine` page and a link from the existing Research Studio are committed to branch `research/open-model-stack`, pull request #2. This page sends new research requests to the existing Supabase research service and can then request the optional critique. It does not import existing browser-local Research Studio runs.
+- **Primary research service:** still uses the OpenAI Responses API with web search. Its provider key and end-to-end execution remain unverified; it must not be described as operational until a real job succeeds and persists.
+- **Frontend release blocker:** Vercel returned a build-rate-limit failure for this branch, so no successful frontend deployment has been confirmed. GitHub Actions also created a failed job without assigning a runner or executing steps, leaving Deno type-check/lint unavailable. These are unresolved validation blockers, not successful tests.
+- **Data handling:** the audit endpoint requires `confirm_external_processing: true` for each request. The recommended free model is only a synthetic/public, non-confidential-data benchmark target. Its output is not independent source verification, and all findings require human review.
+- **No quality claim yet:** no actual research artifact has passed through the audit model in this deployment; no model has been accepted against the Radar evaluation pack. The top model target is a hypothesis for testing, not a validated "best" model.
+
+Next release gate: restore build/test availability, configure the primary research provider server-side, review the free-provider terms and configure the optional model secrets only for data cleared for external processing, then run the invented-decoy, well-served, low-trajectory viral, blind-spot and random 30-claim audit cases.
