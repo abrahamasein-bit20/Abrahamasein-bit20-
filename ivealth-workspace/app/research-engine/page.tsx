@@ -1,6 +1,7 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import type { CSSProperties, FormEvent } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 type Candidate = {
@@ -87,7 +88,7 @@ type ConnectionState = "checking" | "ready" | "config_missing" | "signed_out" | 
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
-const cardStyle: React.CSSProperties = {
+const cardStyle: CSSProperties = {
   background: "var(--panel, #ffffff)",
   border: "1px solid var(--line, #dfe6df)",
   borderRadius: 14,
