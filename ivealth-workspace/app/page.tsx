@@ -3,9 +3,9 @@
 import { useEffect, useMemo, useState } from "react";
 import type { ChangeEvent, ReactNode } from "react";
 import {
-  Activity, ArrowRight, BookOpen, Check, CheckCircle2,
+  Activity, ArrowRight, BookOpen, Check, CheckCircle2, Download,
   ChevronRight, ClipboardCheck, FileJson, FlaskConical,
-  FolderOpen, HeartPulse, LayoutDashboard, ListChecks, Menu, Plus,
+  FolderOpen, HeartPulse, LayoutDashboard, ListChecks, Menu, PackageCheck, Plus,
   Search, ShieldAlert, Target, X
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -14,7 +14,7 @@ type StageKey = "wellbeing_research" | "world_concern_radar" | "problem_validati
 type Concern = { id: string; title: string; population: string; geography: string; signal: string; evidence: string; alternative: string; selected: boolean; status: string };
 type Decision = { stage: StageKey; decision: string; rationale: string; at: string; selectedIds: string[] };
 type Run = { id: string; title: string; scope: string; population: string; geography: string; horizon: string; created: string; stage: StageKey; concerns: Concern[]; decisions: Decision[] };
-type View = "Overview" | "Research runs" | "Wellbeing Research" | "World Concern Radar" | "Problem Validation" | "Opportunity Validation" | "Product Development" | "Evidence Library" | "Decision log";
+type View = "Overview" | "Research runs" | "Wellbeing Research" | "World Concern Radar" | "Problem Validation" | "Opportunity Validation" | "Product Development" | "Product Development Box" | "Evidence Library" | "Decision log";
 const STORE = "ivealth_workspace_v1";
 
 const stageList: { key: StageKey; number: string; title: View; short: string; gate: string; description: string }[] = [
@@ -28,6 +28,7 @@ const stageList: { key: StageKey; number: string; title: View; short: string; ga
 const mainNav: { label: View; icon: LucideIcon }[] = [
   { label: "Overview", icon: LayoutDashboard },
   { label: "Research runs", icon: FolderOpen },
+  { label: "Product Development Box", icon: PackageCheck },
   { label: "Evidence Library", icon: BookOpen },
   { label: "Decision log", icon: ClipboardCheck }
 ];
@@ -170,7 +171,7 @@ export default function Home() {
       <div className="brand-lockup"><div className="brand-mark">i</div><div><div className="brand-name">iValth</div><div className="brand-sub">RESEARCH STUDIO</div></div></div>
       <div className="rail-label">WORKSPACE</div>
       <nav className="primary-nav" aria-label="Main navigation">
-        {mainNav.slice(0, 2).map(item => <NavButton key={item.label} item={item} active={view === item.label} onClick={() => goto(item.label)} />)}
+        {mainNav.filter(item => item.label === "Overview" || item.label === "Research runs" || item.label === "Product Development Box").map(item => <NavButton key={item.label} item={item} active={view === item.label} onClick={() => goto(item.label)} />)}
       </nav>
       <div className="rail-label rail-label-spaced">RESEARCH WORKFLOW</div>
       <nav className="workflow-nav" aria-label="Research workflow">{stageList.map((s, i) => {
@@ -205,7 +206,8 @@ export default function Home() {
       {view === "Problem Validation" && <ValidationView run={activeRun} stage="problem_validation" decision={decision} setDecision={setDecision} rationale={rationale} setRationale={setRationale} onDecision={recordDecision} onCreate={openCreate}/>}
       {view === "Opportunity Validation" && <ValidationView run={activeRun} stage="opportunity_validation" decision={decision} setDecision={setDecision} rationale={rationale} setRationale={setRationale} onDecision={recordDecision} onCreate={openCreate}/>}
       {view === "Product Development" && <ValidationView run={activeRun} stage="product_development" decision={decision} setDecision={setDecision} rationale={rationale} setRationale={setRationale} onDecision={recordDecision} onCreate={openCreate}/>}
-      {view === "Evidence Library" && <EvidenceView runs={runs}/>}
+      {view === "Product Development Box" && <ProductDevelopmentBox runs={runs} onOpen={r => { setActiveRunId(r.id); goto("Product Development"); }} />}
+      {view === "Evidence Library" && <EvidenceView runs={runs}/}
       {view === "Decision log" && <DecisionLog run={activeRun} runs={runs} onSelect={r=>setActiveRunId(r.id)}/>}
 
       {showNew && <div className="sheet-backdrop"><section className="create-sheet" role="dialog" aria-modal="true" aria-labelledby="create-title">
@@ -221,7 +223,7 @@ export default function Home() {
       {[{label:"Overview" as View, short:"Home", icon:LayoutDashboard},{label:"Research runs" as View, short:"Runs", icon:FolderOpen},{label:activeRun ? stageFor(activeRun.stage).title : "Wellbeing Research" as View, short:"Current", icon:Activity},{label:"Decision log" as View, short:"Decisions", icon:ClipboardCheck}].map(item=>{const Icon=item.icon;return <button key={item.short} className={view===item.label?"selected":""} onClick={()=>goto(item.label)}><Icon size={19}/><small>{item.short}</small></button>;})}
       <button className={mobileMore?"selected":""} onClick={()=>setMobileMore(v=>!v)}><Menu size={19}/><small>More</small></button>
     </nav>
-    {mobileMore && <div className="mobile-more-menu">{stageList.map(s=><button key={s.key} onClick={()=>goto(s.title)}><span>{s.number}</span>{s.title}</button>)}<button onClick={()=>goto("Evidence Library")}><BookOpen size={16}/> Evidence Library</button></div>}
+    {mobileMore && <div className="mobile-more-menu">{stageList.map(s=><button key={s.key} onClick={()=>goto(s.title)}><span>{s.number}</span>{s.title}</button>)}<button onClick={()=>goto("Product Development Box")}><PackageCheck size={16}/> Product Development Box</button><button onClick={()=>goto("Evidence Library")}><BookOpen size={16}/> Evidence Library</button></div>}
   </div>;
 }
 
@@ -301,6 +303,73 @@ function DecisionHistory({items}:{items:Decision[]}) {
  if(!items.length)return <section className="surface-panel"><EmptyState icon={<ClipboardCheck size={21}/>} title="No decision recorded yet" description="When a human reviews this stage, the rationale and selected item IDs will appear here."/></section>;
  return <section className="surface-panel"><div className="panel-heading"><div><h2>Decision history</h2><p>Locally stored decisions for this stage.</p></div></div><div className="decision-list">{items.slice().reverse().map((d,i)=><article key={d.at+i} className="decision-card"><div className="decision-card-top"><span className="decision-icon"><CheckCircle2 size={16}/></span><div><strong>{stageFor(d.stage).title}</strong><small>{new Date(d.at).toLocaleString()}</small></div><span className="decision-type">{d.decision.replaceAll("_"," ")}</span></div><p>{d.rationale}</p><div className="decision-ids">Selected IDs: {d.selectedIds.join(", ")||"None"}</div></article>)}</div></section>;
 }
+
+function ProductDevelopmentBox({runs,onOpen}:{runs:Run[];onOpen:(run:Run)=>void}) {
+  const approved = runs.flatMap(run => {
+    const approval = [...run.decisions].reverse().find(d => d.stage === "product_development" && d.decision === "approved");
+    if (!approval || run.stage !== "product_development") return [];
+    return [{ run, approval, selectedProblems: run.concerns.filter(c => approval.selectedIds.includes(c.id)) }];
+  }).sort((a,b) => b.approval.at.localeCompare(a.approval.at));
+
+  const packageFor = (entry: typeof approved[number]) => ({
+    export_schema: "ivealth-product-development-package/v1",
+    package_status: "approved",
+    exported_at: new Date().toISOString(),
+    run_id: entry.run.id,
+    title: entry.run.title,
+    research_question: entry.run.scope,
+    population: entry.run.population || "UNKNOWN",
+    geography: entry.run.geography || "UNKNOWN",
+    horizon: entry.run.horizon || "UNKNOWN",
+    product_development_approval: entry.approval,
+    approved_problem_records: entry.selectedProblems,
+    full_research_run: entry.run
+  });
+
+  const downloadJson = (filename:string,payload:unknown) => {
+    const blob = new Blob([JSON.stringify(payload,null,2)], {type:"application/json;charset=utf-8"});
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = filename;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+  const slug = (value:string) => value.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"") || "research-run";
+  const downloadAll = () => downloadJson("ivealth-product-development-box.json", {
+    export_schema: "ivealth-product-development-box/v1",
+    title: "iValth Product Development Box",
+    exported_at: new Date().toISOString(),
+    approval_rule: "Only runs with an explicit Product Development decision of approved are included.",
+    package_count: approved.length,
+    packages: approved.map(packageFor)
+  });
+
+  return <div className="view-stack">
+    <PageIntro eyebrow="PRODUCT HANDOFF" title="Product Development Box" description="A collection of research packages that reached Product Development and received an explicit human approval. The box never approves work automatically." action={<button className="primary-button" onClick={downloadAll} disabled={approved.length===0}><Download size={17}/> Download all approved packages</button>}/>
+    <section className="product-box-hero">
+      <div className="product-box-icon"><PackageCheck size={30}/></div>
+      <div className="product-box-hero-copy"><span className="product-box-kicker">APPROVED HANDOFFS ONLY</span><h2>{approved.length} approved package{approved.length===1?"":"s"}</h2><p>Each package includes the research question, scope, approved problem IDs, evidence and counterevidence notes, decision rationale, and full research-run record.</p></div>
+      <div className="product-box-count"><strong>{approved.length}</strong><span>ready to download</span></div>
+    </section>
+    <div className="product-box-local-note"><ShieldAlert size={19}/><p><strong>Sharing note:</strong> this version stores records in the current browser only. Download the JSON bundle and share it with the product development team. A centrally synced team box requires authenticated shared storage.</p></div>
+    <section className="surface-panel product-box-panel">
+      <div className="panel-heading"><div><h2>Approved research packages</h2><p>Only explicit Product Development approvals appear here.</p></div><span className="quiet-count">{approved.length} ready</span></div>
+      {approved.length===0
+        ? <EmptyState icon={<PackageCheck size={24}/>} title="No approved packages yet" description="A research run will appear here after it reaches Product Development and a human records “Approve the experiment plan.” Research that is still under review stays out of this box."/>
+        : <div className="product-package-list">{approved.map(({run,approval,selectedProblems})=><article className="product-package-card" key={run.id}>
+            <div className="product-package-top"><span className="product-approved-mark"><CheckCircle2 size={17}/> Approved</span><time dateTime={approval.at}>{new Date(approval.at).toLocaleString()}</time></div>
+            <h3>{run.title}</h3><p className="product-package-question">{run.scope}</p>
+            <div className="product-package-meta"><span>{run.geography || "Geography unknown"}</span><span>{run.population || "Population unspecified"}</span><span>{selectedProblems.length} approved problem record{selectedProblems.length===1?"":"s"}</span></div>
+            <div className="product-package-rationale"><strong>Approval rationale</strong><p>{approval.rationale}</p></div>
+            <div className="product-package-actions"><button className="primary-button" onClick={()=>downloadJson(slug(run.title)+"-product-development.json",packageFor({run,approval,selectedProblems}))}><Download size={16}/> Download package</button><button className="secondary-button" onClick={()=>onOpen(run)}>Open research run <ArrowRight size={16}/></button></div>
+          </article>)}</div>}
+    </section>
+  </div>;
+}
+
 function EvidenceView({runs}:{runs:Run[]}) {
  const entries=runs.flatMap(r=>r.concerns.map(c=>({run:r,concern:c})));
  return <div className="view-stack"><PageIntro eyebrow="RESEARCH LIBRARY" title="Evidence library" description="Review source and counterevidence notes attached to candidate problems. This is a local view, not a verified source registry."/>{entries.length===0?<section className="surface-panel"><EmptyState icon={<BookOpen size={22}/>} title="No evidence notes yet" description="Add candidate problems with source details to see the evidence notes here."/></section>:<section className="surface-panel"><div className="panel-heading"><div><h2>Evidence notes</h2><p>{entries.length} candidate records across {runs.length} runs.</p></div></div><div className="evidence-library-list">{entries.map(({run,concern})=><article className="evidence-library-row" key={run.id+concern.id}><span className="candidate-id">{concern.id}</span><div><h3>{concern.title}</h3><p>{run.title} · {concern.population} · {concern.geography}</p><details className="evidence-details"><summary>Open evidence and counterevidence</summary><div className="evidence-detail-grid"><div><strong>Evidence</strong><p>{concern.evidence}</p></div><div><strong>Alternative / counterevidence</strong><p>{concern.alternative}</p></div></div></details></div></article>)}</div></section>}</div>;
