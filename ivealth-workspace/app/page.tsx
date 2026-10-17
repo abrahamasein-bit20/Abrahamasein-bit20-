@@ -264,43 +264,36 @@ function StageProgress({stage}:{stage:StageKey}) {
  return <div className="stage-progress" aria-label={"Current stage "+(idx+1)+" of 5"}>{stageList.map((s,i)=><div key={s.key} className={"stage-progress-step "+(i<idx?"complete ":i===idx?"current":"")}><span className="progress-node">{i<idx?<Check size={13}/>:s.number}</span><span className="progress-caption">{s.short}</span></div>)}</div>;
 }
 function OverviewView({runs,activeRun,onCreate,onOpen,onViewRuns,onImport,importBusy,onContinue}:{runs:Run[];activeRun:Run|null;onCreate:()=>void;onOpen:(r:Run)=>void;onViewRuns:()=>void;onImport:(e:ChangeEvent<HTMLInputElement>)=>void;importBusy:boolean;onContinue:()=>void}) {
- const countCandidates=runs.reduce((n,r)=>n+r.concerns.length,0);
- const countDecisions=runs.reduce((n,r)=>n+r.decisions.length,0);
- const currentStage=activeRun?stageFor(activeRun.stage):null;
  return <div className="view-stack overview-view">
   <section className="overview-hero">
    <div className="overview-hero-copy">
-    <div className="eyebrow">IVALTh / RESEARCH OPERATIONS</div>
-    <h1>Research that earns its next step.</h1>
-    <p>Move from a human wellbeing question to evidence review, problem validation and product experiments—with a clear human decision at every gate.</p>
+    <div className="eyebrow">IVALTh / WELLBEING RESEARCH</div>
+    <h1>Understand the problem before building the product.</h1>
+    <p>Research human wellbeing concerns, verify the evidence, and decide what deserves validation. Each step requires a clear human decision.</p>
     <div className="overview-hero-actions">
      <button className="primary-button" onClick={onCreate}><Plus size={16}/> New research run</button>
-     <a href="/research-engine" className="secondary-button"><FlaskConical size={16}/> Open AI Research Engine <ArrowRight size={14}/></a>
+     <a href="/research-engine" className="secondary-button"><FlaskConical size={16}/> AI Research Engine <ArrowRight size={14}/></a>
      {activeRun&&<button className="subtle-button overview-resume" onClick={onContinue}>Resume current run <ChevronRight size={15}/></button>}
     </div>
-    <div className="overview-hero-note"><ShieldAlert size={15}/><span>Research outputs are provisional. Evidence and human approval—not model confidence—determine what advances.</span></div>
+    <p className="overview-hero-note"><ShieldAlert size={15}/><span>Findings remain provisional until sources are reviewed and a human approves the next step.</span></p>
    </div>
-   <aside className="overview-hero-side">
-    <div className="overview-side-kicker"><span className="overview-live-dot"/>{activeRun?"ACTIVE RESEARCH RUN":"WORKSPACE STATUS"}</div>
-    <h2>{activeRun?activeRun.title:"Ready to define a question"}</h2>
-    <p>{activeRun?activeRun.scope:"Start by setting the question, population, geography and time horizon. No research scan starts automatically."}</p>
-    <div className="overview-side-divider"/>
-    <div className="overview-next-gate"><span>NEXT HUMAN GATE</span><strong>{currentStage?currentStage.gate:"Approve scope"}</strong><small>{currentStage?"Stage "+currentStage.number+" · "+currentStage.title:"Stage 00 · Wellbeing Research"}</small></div>
-   </aside>
   </section>
-  <div className="summary-strip">
-   <div className="summary-item"><span>Research runs</span><strong>{runs.length}</strong><small>Saved in this browser</small></div>
-   <div className="summary-item"><span>Candidate problems</span><strong>{countCandidates}</strong><small>Not necessarily validated</small></div>
-   <div className="summary-item"><span>Human decisions</span><strong>{countDecisions}</strong><small>Recorded review choices</small></div>
-   <div className="summary-item summary-status"><span>Workspace storage</span><strong><span className="status-dot"/>{runs.length?"Local workspace":"Ready to start"}</strong><small>Browser-local prototype records</small></div>
-  </div>
-  <div className="section-heading-row"><div><h2>Research workflow</h2><p>Five stages. Explicit review gates. No automatic advancement.</p></div><span className="workflow-caption">FROM QUESTION TO EXPERIMENT</span></div>
-  <div className="workflow-overview">{stageList.map((s,i)=>{const Icon=[HeartPulse,Activity,ListChecks,Target,FlaskConical][i];const done=activeRun&&i<stageList.findIndex(x=>x.key===activeRun.stage);const current=activeRun?activeRun.stage===s.key:i===0;return <div className={"workflow-overview-item "+(current?"is-current ":"")+(done?"is-done":"")} key={s.key}><div className="overview-stage-top"><span className="overview-stage-number">{s.number}</span><span className="overview-stage-state">{done?<Check size={13}/>:current?"Current":"Upcoming"}</span></div><div className="overview-stage-icon"><Icon size={17}/></div><h3>{s.title}</h3><p>{s.description}</p><div className="overview-gate"><span>HUMAN GATE</span><strong>{s.gate}</strong></div></div>;})}</div>
-  <div className="content-columns">
-   <section className="surface-panel"><div className="panel-heading"><div><h2>Recent research runs</h2><p>Pick up where you left off.</p></div><button className="text-button" onClick={onViewRuns}>View all <ArrowRight size={14}/></button></div>{runs.length===0?<EmptyState icon={<FolderOpen size={21}/>} title="No research runs yet" description="Create a run to define the question, population and time horizon before starting detection." action={<button className="primary-button" onClick={onCreate}><Plus size={15}/> Create first run</button>}/>:<div className="run-list">{runs.slice(0,4).map(r=><RunRow key={r.id} run={r} active={r.id===activeRun?.id} onOpen={()=>onOpen(r)}/>)}</div>}</section>
-   <section className="surface-panel"><div className="panel-heading"><div><h2>Import Radar findings</h2><p>Bring structured findings into the register.</p></div><span className="mini-icon"><FileJson size={16}/></span></div><div className="import-panel"><p>Import a Radar JSON export. Imported claims remain unverified until reviewed against their sources.</p><label className="secondary-button upload-button">{importBusy?"Importing…":"Choose JSON file"}<input type="file" accept="application/json,.json" disabled={importBusy} onChange={onImport} hidden/></label><div className="muted-note">JSON only · Missing evidence remains UNKNOWN</div></div><div className="principle-list"><div><CheckCircle2 size={15}/><span>Claims stay traceable to source records</span></div><div><CheckCircle2 size={15}/><span>Concern, harm and exposure stay distinct</span></div><div><CheckCircle2 size={15}/><span>Only human-selected problems advance</span></div></div></section>
-  </div>
-  <div className="local-data-note"><ShieldAlert size={14}/><span><strong>Prototype storage.</strong> Runs and decisions are saved in this browser only. They are not yet synced across devices; don't enter confidential data.</span></div>
+  <section className="surface-panel overview-recent-panel">
+   <div className="panel-heading">
+    <div><h2>Recent research</h2><p>{runs.length ? "Continue an existing run or open its latest stage." : "Your research runs will appear here."}</p></div>
+    <button className="text-button" onClick={onViewRuns}>All runs <ArrowRight size={14}/></button>
+   </div>
+   {runs.length===0
+    ? <EmptyState icon={<FolderOpen size={21}/>} title="No research yet" description="Create a run to define the research question, population and time horizon." action={<button className="primary-button" onClick={onCreate}><Plus size={15}/> Create first run</button>}/>
+    : <div className="run-list">{runs.slice(0,5).map(r=><RunRow key={r.id} run={r} active={r.id===activeRun?.id} onOpen={()=>onOpen(r)}/>)}</div>}
+  </section>
+  <details className="overview-utility">
+   <summary>Import Radar findings (JSON)</summary>
+   <p>Import structured findings for review. Imported claims remain unverified until checked against their original sources.</p>
+   <label className="secondary-button upload-button">{importBusy?"Importing…":"Choose JSON file"}<input type="file" accept="application/json,.json" disabled={importBusy} onChange={onImport} hidden/></label>
+   <span className="muted-note">JSON only · Missing evidence remains UNKNOWN</span>
+  </details>
+  <div className="local-data-note"><ShieldAlert size={14}/><span><strong>Prototype storage.</strong> Research Studio runs are saved in this browser only and are not synced across devices. Do not enter confidential data.</span></div>
  </div>;
 }
 function RunRow({run,active,onOpen}:{run:Run;active:boolean;onOpen:()=>void}) {
