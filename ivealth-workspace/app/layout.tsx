@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import "./redesign.css";
+import "./product-redesign.css";
 
 export const metadata: Metadata = {
   title: "iValth | Wellbeing Research Workspace",
