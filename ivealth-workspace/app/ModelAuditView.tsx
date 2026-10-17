@@ -61,7 +61,16 @@ export default function ModelAuditView() {
     setHealth(status);
     const list: Job[] = Array.isArray(result.jobs) ? result.jobs : [];
     setJobs(list);
-    setSelectedId((id) => id && list.some((job) => job.id === id) ? id : list[0]?.id || "");
+    const firstId = list[0]?.id || "";
+    setSelectedId(firstId);
+    if (firstId) {
+      try {
+        const detail = await request("/jobs/" + encodeURIComponent(firstId), activeSession.access_token);
+        if (detail.job) setJobs((current) => current.map((job) => job.id === firstId ? detail.job as Job : job));
+      } catch {
+        // The list remains usable if detail retrieval fails.
+      }
+    }
   }, [request]);
 
   useEffect(() => {
@@ -125,6 +134,17 @@ export default function ModelAuditView() {
     } finally { setBusy(false); }
   };
 
+  const openJob = async (id: string) => {
+    setSelectedId(id);
+    if (!session) return;
+    try {
+      const payload = await request("/jobs/" + encodeURIComponent(id), session.access_token);
+      if (payload.job) setJobs((current) => current.map((job) => job.id === id ? payload.job as Job : job));
+    } catch (e) {
+      tell(e instanceof Error ? e.message : "Could not load the selected research job.", true);
+    }
+  };
+
   const runAudit = async () => {
     if (!session || !selected) return;
     setBusy(true);
@@ -172,7 +192,7 @@ export default function ModelAuditView() {
       </section>
       <div className="model-audit-results-grid">
         <section className="surface-panel model-audit-panel"><div className="panel-heading"><div><h2>Saved research jobs</h2><p>{jobs.length} jobs for this account</p></div><button className="secondary-button" onClick={() => void reload(session)} disabled={busy}>Refresh</button></div>
-          {jobs.length ? <div className="model-audit-job-list">{jobs.map((job) => <button type="button" key={job.id} className={"model-audit-job " + (selectedId === job.id ? "selected" : "")} onClick={() => setSelectedId(job.id)}><span><strong>{job.title}</strong><b className={"job-status job-status-" + job.status}>{job.status.replaceAll("_", " ")}</b></span><small>{new Date(job.created_at).toLocaleString()}</small><p>{job.research_question}</p></button>)}</div> : <p>No backend research jobs yet.</p>}
+          {jobs.length ? <div className="model-audit-job-list">{jobs.map((job) => <button type="button" key={job.id} className={"model-audit-job " + (selectedId === job.id ? "selected" : "")} onClick={() => void openJob(job.id)}><span><strong>{job.title}</strong><b className={"job-status job-status-" + job.status}>{job.status.replaceAll("_", " ")}</b></span><small>{new Date(job.created_at).toLocaleString()}</small><p>{job.research_question}</p></button>)}</div> : <p>No backend research jobs yet.</p>}
         </section>
         <section className="surface-panel model-audit-panel"><h2>Review selected job</h2>
           {!selected ? <p>Select a saved job. A successful research run is required before auditing.</p> : <>
