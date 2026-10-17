@@ -33,6 +33,19 @@ type SourceRecord = {
   period?: string;
   limitations?: string;
   verification_status?: string;
+  search_trace_status?: string;
+};
+type SearchAudit = {
+  provider?: string;
+  model?: string;
+  response_id?: string | null;
+  search_was_required?: boolean;
+  web_search_call_count?: number;
+  returned_source_count?: number;
+  source_ledger_match_count?: number;
+  sources?: Array<{ title?: string; url?: string; source_type?: string }>;
+  citation_annotations?: Array<{ title?: string; url?: string }>;
+  limitation?: string;
 };
 type ClaimRecord = {
   id?: string;
@@ -72,6 +85,7 @@ type ResearchResult = {
   source_ledger?: SourceRecord[];
   claim_ledger?: ClaimRecord[];
   model_audit?: ModelAudit;
+  search_audit?: SearchAudit;
   status?: string;
   [key: string]: unknown;
 };
@@ -304,6 +318,7 @@ export default function ResearchEnginePage() {
 
   const result = job?.result;
   const audit = result?.model_audit;
+  const searchAudit = result?.search_audit;
   const candidates = Array.isArray(result?.candidates) ? result.candidates : [];
   const sources = Array.isArray(result?.source_ledger) ? result.source_ledger : [];
   const claims = Array.isArray(result?.claim_ledger) ? result.claim_ledger : [];
@@ -418,6 +433,20 @@ export default function ResearchEnginePage() {
         {result && <section style={cardStyle}>
           <h2 style={{ fontSize: 19, margin: "0 0 8px" }}>3. Evidence traceability</h2>
           <p style={mutedStyle}>Source records and claims are shown separately. A generated URL is not itself proof that the source exists or supports the claim.</p>
+          {searchAudit && <details open style={{ marginTop: 12, border: "1px solid var(--line, #dfe6df)", borderRadius: 9, padding: 12 }}>
+            <summary style={{ cursor: "pointer", fontWeight: 700 }}>OpenAI web-search trace ({textOf(searchAudit.returned_source_count, "0")} URLs returned)</summary>
+            <p style={{ ...mutedStyle, margin: "8px 0" }}>Model: {textOf(searchAudit.model)} · Web-search calls: {textOf(searchAudit.web_search_call_count, "0")} · Source-ledger URLs observed in returned trace: {textOf(searchAudit.source_ledger_match_count, "0")}</p>
+            <p style={{ ...mutedStyle, margin: "4px 0 10px" }}>{textOf(searchAudit.limitation)}</p>
+            {Array.isArray(searchAudit.sources) && searchAudit.sources.length > 0 ? <div style={{ display: "grid", gap: 7 }}>
+              {searchAudit.sources.map((source, index) => {
+                const url = safeWebUrl(source.url);
+                return <div key={(source.url || "") + index} style={{ fontSize: 12, overflowWrap: "anywhere" }}>
+                  {source.title || "Untitled source"}{url ? <> · <a href={url} target="_blank" rel="noreferrer" style={{ color: "#215b48" }}>{url}</a></> : null}
+                  <span style={{ ...mutedStyle, display: "block", fontSize: 11 }}>Trace type: {textOf(source.source_type)}</span>
+                </div>;
+              })}
+            </div> : <p style={mutedStyle}>No enumerated search URLs were returned by the API. Treat all source-ledger URLs as needing manual verification.</p>}
+          </details>}
           <details open style={{ marginTop: 12 }}>
             <summary style={{ cursor: "pointer", fontWeight: 700 }}>Source ledger ({sources.length})</summary>
             {sources.length === 0 ? <p style={mutedStyle}>No source rows returned.</p> : <div style={{ display: "grid", gap: 10, marginTop: 10 }}>
@@ -429,7 +458,7 @@ export default function ResearchEnginePage() {
                   <p style={{ ...mutedStyle, margin: "3px 0" }}>{textOf(source.publisher)} · {textOf(source.publication_date)} · {textOf(source.evidence_class)}</p>
                   <p style={{ ...mutedStyle, margin: "3px 0" }}>Geography: {textOf(source.geography)} · Population: {textOf(source.population)} · Period: {textOf(source.period)}</p>
                   <p style={{ ...mutedStyle, margin: "3px 0" }}>Measure / denominator: {textOf(source.measure_and_denominator)}</p>
-                  <p style={{ ...mutedStyle, margin: "3px 0" }}>Verification: {textOf(source.verification_status)} · Limitations: {textOf(source.limitations)}</p>
+                  <p style={{ ...mutedStyle, margin: "3px 0" }}>Verification: {textOf(source.verification_status)} · Search trace: {textOf(source.search_trace_status)} · Limitations: {textOf(source.limitations)}</p>
                   {url && <a href={url} target="_blank" rel="noreferrer" style={{ color: "#215b48", fontSize: 12, overflowWrap: "anywhere" }}>{url}</a>}
                 </article>;
               })}
