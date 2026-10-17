@@ -9,6 +9,72 @@ const cors = {
 };
 const reply = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: cors });
 const json = async (req: Request) => { try { return await req.json(); } catch { return null; } };
+type SearchSource = { title: string; url: string; source_type?: string };
+
+function normalizeUrl(value: unknown): string | null {
+  if (typeof value !== "string" || !value.trim()) return null;
+  try {
+    const parsed = new URL(value);
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return null;
+    for (const key of [...parsed.searchParams.keys()]) {
+      if (/^(utm_.+|fbclid|gclid|mc_cid|mc_eid)$/i.test(key)) parsed.searchParams.delete(key);
+    }
+    parsed.hash = "";
+    parsed.pathname = parsed.pathname.replace(/\/$/, "") || "/";
+    parsed.searchParams.sort();
+    return parsed.toString().replace(/\/$/, "");
+  } catch {
+    return null;
+  }
+}
+
+function addSearchSource(target: Map<string, SearchSource>, candidate: any, sourceType: string) {
+  const url = typeof candidate?.url === "string" ? candidate.url : "";
+  const normalized = normalizeUrl(url);
+  if (!normalized) return;
+  const source: SearchSource = {
+    title: typeof candidate?.title === "string" && candidate.title.trim() ? candidate.title.trim() : normalized,
+    url,
+    source_type: sourceType,
+  };
+  const previous = target.get(normalized);
+  if (!previous || (previous.title === previous.url && source.title !== source.url)) target.set(normalized, source);
+}
+
+function collectSearchTrace(apiBody: any) {
+  const sources = new Map<string, SearchSource>();
+  const citations: Array<{ title: string; url: string }> = [];
+  const output = Array.isArray(apiBody?.output) ? apiBody.output : [];
+  let webSearchCallCount = 0;
+
+  for (const item of output) {
+    if (item?.type === "web_search_call") {
+      webSearchCallCount += 1;
+      const actionSources = Array.isArray(item?.action?.sources) ? item.action.sources : [];
+      for (const source of actionSources) addSearchSource(sources, source, "web_search_result");
+    }
+    if (item?.type !== "message" || !Array.isArray(item?.content)) continue;
+    for (const part of item.content) {
+      const annotations = Array.isArray(part?.annotations) ? part.annotations : [];
+      for (const annotation of annotations) {
+        if (annotation?.type !== "url_citation") continue;
+        const citation = annotation.url_citation ?? annotation;
+        const url = typeof citation?.url === "string" ? citation.url : "";
+        const title = typeof citation?.title === "string" && citation.title.trim() ? citation.title.trim() : url;
+        if (normalizeUrl(url)) {
+          citations.push({ title, url });
+          addSearchSource(sources, { title, url }, "response_citation");
+        }
+      }
+    }
+  }
+
+  return {
+    webSearchCallCount,
+    sources: [...sources.values()],
+    citationAnnotations: citations,
+  };
+}
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
@@ -92,24 +158,82 @@ Return this JSON shape:
 Keep source_ids consistent. If no credible source can be verified, return an empty candidates list or clearly limited candidates, not fabricated entries. The candidate pool is provisional; do not invent user-supplied controls or claim this is a comprehensive global scan.`;
 
     try {
+      const researchModel = Deno.env.get("OPENAI_RESEARCH_MODEL") || "gpt-6.1-sol";
+      const requestBody: Record<string, unknown> = {
+        model: researchModel,
+        tools: [{ type: "web_search" }],
+        tool_choice: "required",
+        include: ["web_search_call.action.sources"],
+        max_output_tokens: 12000,
+        input: [{ role: "system", content: [{ type: "input_text", text: systemPrompt }] }, { role: "user", content: [{ type: "input_text", text: userPrompt }] }],
+        text: { format: { type: "json_object" } },
+      };
+      if (/^gpt-(5|6)/i.test(researchModel)) {
+        requestBody.reasoning = { effort: Deno.env.get("OPENAI_REASONING_EFFORT") || "medium" };
+      }
+
       const response = await fetch("https://api.openai.com/v1/responses", {
         method: "POST",
         headers: { "Authorization": `Bearer ${openaiKey}`, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: Deno.env.get("OPENAI_RESEARCH_MODEL") || "gpt-4.1",
-          tools: [{ type: "web_search" }],
-          input: [{ role: "system", content: [{ type: "input_text", text: systemPrompt }] }, { role: "user", content: [{ type: "input_text", text: userPrompt }] }],
-          text: { format: { type: "json_object" } },
-        }),
+        body: JSON.stringify(requestBody),
       });
-      const apiBody = await response.json();
+      const apiBody = await response.json().catch(() => null);
       if (!response.ok) throw new Error(`Research provider returned HTTP ${response.status}: ${String(apiBody?.error?.message || "request failed").slice(0, 400)}`);
+      if (!apiBody || typeof apiBody !== "object") throw new Error("Research provider returned an unreadable response.");
+      if (apiBody.status === "incomplete") throw new Error(`Research provider returned an incomplete response: ${String(apiBody.incomplete_details?.reason || "output incomplete").slice(0, 200)}`);
       const textOutput = (apiBody.output ?? []).flatMap((item: any) => item.type === "message" ? (item.content ?? []).filter((c: any) => c.type === "output_text").map((c: any) => c.text) : []).join("\n");
       if (!textOutput) throw new Error("Research provider returned no structured output.");
       let result: any;
       try { result = JSON.parse(textOutput); } catch { throw new Error("Research provider output was not valid JSON."); }
+      if (!result || typeof result !== "object" || Array.isArray(result)) throw new Error("Research provider output was not a JSON object.");
+
+      const trace = collectSearchTrace(apiBody);
+      const traceUrls = new Set(trace.sources.map((source) => normalizeUrl(source.url)).filter((url): url is string => Boolean(url)));
+      const sourceLedger = Array.isArray(result.source_ledger) ? result.source_ledger : [];
+      const sourceLedgerMatchCount = sourceLedger.filter((source: any) => {
+        const normalized = normalizeUrl(source?.canonical_url);
+        return Boolean(normalized && traceUrls.has(normalized));
+      }).length;
+      result.source_ledger = sourceLedger.map((source: any) => {
+        const normalized = normalizeUrl(source?.canonical_url);
+        const matched = Boolean(normalized && traceUrls.has(normalized));
+        return {
+          ...source,
+          search_trace_status: matched
+            ? "url_observed_in_openai_search_trace"
+            : normalized
+              ? "not_observed_in_returned_search_trace_manual_check_required"
+              : "missing_or_invalid_url_manual_check_required",
+        };
+      });
+      result.search_audit = {
+        provider: "OpenAI Responses API web_search",
+        model: researchModel,
+        response_id: typeof apiBody.id === "string" ? apiBody.id : null,
+        search_was_required: true,
+        web_search_call_count: trace.webSearchCallCount,
+        returned_source_count: trace.sources.length,
+        source_ledger_match_count: sourceLedgerMatchCount,
+        sources: trace.sources,
+        citation_annotations: trace.citationAnnotations,
+        limitation: "A URL appearing in the API search trace is evidence that it was surfaced by search, not proof that it supports the associated claim. Unmatched or missing URLs require manual checking.",
+      };
+      const brief = result.research_brief && typeof result.research_brief === "object" && !Array.isArray(result.research_brief)
+        ? result.research_brief
+        : {};
+      result.research_brief = {
+        ...brief,
+        tools_used: trace.webSearchCallCount > 0 ? ["OpenAI Responses API web_search"] : [],
+        tools_not_used: ["Human source-opening verification", "Independent duplicate-dataset audit", "Longitudinal trend validation unless comparable series are cited"],
+        sources_searched: trace.sources.map((source) => source.title + " — " + source.url),
+        limitations: [
+          ...(Array.isArray(brief.limitations) ? brief.limitations.filter((item: unknown) => typeof item === "string") : []),
+          "Search-trace presence does not verify the factual accuracy of a source or prove that it supports a claim.",
+          ...(!trace.sources.length ? ["The API returned no enumerated search sources; every source-ledger entry requires manual verification."] : []),
+        ],
+      };
       const status = result.status === "complete" ? "complete" : "complete_with_limitations";
-      const { data: updated, error: updateError } = await db.from("research_jobs").update({ status, result, model: Deno.env.get("OPENAI_RESEARCH_MODEL") || "gpt-4.1", completed_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq("id", job.id).eq("user_id", user.id).select("*").single();
+      const { data: updated, error: updateError } = await db.from("research_jobs").update({ status, result, model: researchModel, completed_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq("id", job.id).eq("user_id", user.id).select("*").single();
       if (updateError || !updated) throw new Error("Research finished but saving the result failed.");
       return reply({ job: updated });
     } catch (error) {

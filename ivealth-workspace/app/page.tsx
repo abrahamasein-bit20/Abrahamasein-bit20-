@@ -188,6 +188,11 @@ export default function Home() {
       <div className="rail-label">WORKSPACE</div>
       <nav className="primary-nav" aria-label="Main navigation">
         {mainNav.filter(item => item.label === "Overview" || item.label === "Research runs" || item.label === "Product Development Box").map(item => <NavButton key={item.label} item={item} active={view === item.label} onClick={() => goto(item.label)} />)}
+        <a href="/research-engine" className="primary-nav-item research-engine-entry" aria-label="Open AI Research Engine" style={{ background: "#e7f5f2", borderColor: "#c6e7df", color: "#115e59", marginTop: 7, minHeight: 48, textDecoration: "none" }}>
+          <FlaskConical size={17} />
+          <span style={{ display: "grid", gap: 2, minWidth: 0 }}><strong style={{ fontSize: 13 }}>AI Research Engine</strong><small style={{ fontSize: 11, fontWeight: 600, color: "#39766c" }}>Evidence-led scans</small></span>
+          <ArrowRight size={15} style={{ marginLeft: "auto" }} />
+        </a>
       </nav>
       <div className="rail-label rail-label-spaced">RESEARCH WORKFLOW</div>
       <nav className="workflow-nav" aria-label="Research workflow">{stageList.map((s, i) => {
@@ -197,7 +202,7 @@ export default function Home() {
       })}</nav>
       <div className="rail-bottom">
         <div className="rail-bottom-title"><ShieldAlert size={15}/> Prototype mode</div>
-        <p>Records stay in this browser. Authentication and shared database sync are not enabled.</p>
+        <p>Research Studio runs stay in this browser. Use AI Research Engine for authenticated API research jobs.</p>
         <div className="rail-storage"><span/> Browser storage active</div>
       </div>
     </aside>
@@ -210,6 +215,7 @@ export default function Home() {
         <div className="toolbar-actions">
           <button className="theme-toggle" onClick={() => setTheme(v => v === "dark" ? "light" : "dark")} aria-label={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"} title={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}>{theme === "dark" ? <Sun size={16}/> : <Moon size={16}/>}<span>{theme === "dark" ? "Light mode" : "Dark mode"}</span></button>
           {activeRun && <button className="subtle-button" onClick={exportRun}><FileJson size={15}/> Export run</button>}
+          <a href="/research-engine" className="subtle-button" style={{ textDecoration: "none" }}><FlaskConical size={15}/> <span>AI Research Engine</span></a>
           <button className="primary-button" onClick={openCreate}><Plus size={17}/> <span>New research run</span></button>
         </div>
       </header>
@@ -240,7 +246,7 @@ export default function Home() {
       {[{label:"Overview" as View, short:"Home", icon:LayoutDashboard},{label:"Research runs" as View, short:"Runs", icon:FolderOpen},{label:activeRun ? stageFor(activeRun.stage).title : "Wellbeing Research" as View, short:"Current", icon:Activity},{label:"Decision log" as View, short:"Decisions", icon:ClipboardCheck}].map(item=>{const Icon=item.icon;return <button key={item.short} className={view===item.label?"selected":""} onClick={()=>goto(item.label)}><Icon size={19}/><small>{item.short}</small></button>;})}
       <button className={mobileMore?"selected":""} onClick={()=>setMobileMore(v=>!v)}><Menu size={19}/><small>More</small></button>
     </nav>
-    {mobileMore && <div className="mobile-more-menu">{stageList.map(s=><button key={s.key} onClick={()=>goto(s.title)}><span>{s.number}</span>{s.title}</button>)}<button onClick={()=>goto("Product Development Box")}><PackageCheck size={16}/> Product Development Box</button><button onClick={()=>goto("Evidence Library")}><BookOpen size={16}/> Evidence Library</button></div>}
+    {mobileMore && <div className="mobile-more-menu"><a href="/research-engine" className="mobile-more-engine-link" style={{ display: "flex", alignItems: "center", gap: 10, border: "1px solid #c6e7df", background: "#e7f5f2", textAlign: "left", padding: 12, borderRadius: 9, fontSize: 14, color: "#115e59", minHeight: 44, fontWeight: 750, textDecoration: "none" }}><FlaskConical size={16}/> AI Research Engine <ArrowRight size={14} style={{ marginLeft: "auto" }}/></a>{stageList.map(s=><button key={s.key} onClick={()=>goto(s.title)}><span>{s.number}</span>{s.title}</button>)}<button onClick={()=>goto("Product Development Box")}><PackageCheck size={16}/> Product Development Box</button><button onClick={()=>goto("Evidence Library")}><BookOpen size={16}/> Evidence Library</button></div>}
   </div>;
 }
 
@@ -264,6 +270,11 @@ function OverviewView({runs,activeRun,onCreate,onOpen,onViewRuns,onImport,import
   <PageIntro eyebrow="RESEARCH OPERATIONS" title="Research overview" description="A clear view of your wellbeing research, the evidence collected, and the next decision awaiting review." action={<button className="primary-button" onClick={onCreate}><Plus size={17}/> New research run</button>}/>
   <section className="welcome-panel"><div className="welcome-copy"><span className="eyebrow light">THE IVALTH RESEARCH METHOD</span><h2>{activeRun ? "Continue the work that matters." : "Start with a human question."}</h2><p>{activeRun ? activeRun.scope : "Define a wellbeing question, examine the evidence, then decide which problem deserves deeper validation. The system won't choose for you."}</p><div className="welcome-actions"><button className="light-primary-button" onClick={activeRun?onContinue:onCreate}>{activeRun?"Continue current run":"Create research run"} <ArrowRight size={16}/></button>{activeRun&&<span className="welcome-stage">{stageFor(activeRun.stage).number} / 04 · {stageFor(activeRun.stage).title}</span>}</div></div><div className="welcome-graphic" aria-hidden="true"><div className="orbit orbit-one"/><div className="orbit orbit-two"/><div className="orbit-core"><Target size={27}/></div><span className="orbit-dot dot-a"/><span className="orbit-dot dot-b"/><span className="orbit-dot dot-c"/></div></section>
   <div className="summary-strip"><div className="summary-item"><span>Research runs</span><strong>{runs.length}</strong><small>{runs.length===1?"1 current workstream":"Across your local workspace"}</small></div><div className="summary-item"><span>Candidate problems</span><strong>{countCandidates}</strong><small>Not necessarily validated</small></div><div className="summary-item"><span>Human decisions</span><strong>{countDecisions}</strong><small>Saved in this browser</small></div><div className="summary-item summary-status"><span>Data storage</span><strong><span className="status-dot"/>Local only</strong><small>Not yet synced across devices</small></div></div>
+  <a href="/research-engine" className="overview-engine-card" aria-label="Open AI Research Engine">
+    <span className="overview-engine-icon"><FlaskConical size={22}/></span>
+    <span className="overview-engine-copy"><span className="overview-engine-kicker">CONNECTED RESEARCH TOOL</span><strong>AI Research Engine</strong><span>Run source-traceable web research, inspect claims and source records, and export the evidence ledger for human review.</span></span>
+    <span className="overview-engine-action">Open engine <ArrowRight size={16}/></span>
+  </a>
   <div className="section-heading-row"><div><h2>Research workflow</h2><p>Each stage ends with an explicit human decision.</p></div></div>
   <div className="workflow-overview">{stageList.map((s,i)=>{const Icon=[HeartPulse,Activity,ListChecks,Target,FlaskConical][i];const done=activeRun&&i<stageList.findIndex(x=>x.key===activeRun.stage);const current=activeRun?activeRun.stage===s.key:i===0;return <div className={"workflow-overview-item "+(current?"is-current ":"")+(done?"is-done":"")} key={s.key}><div className="overview-stage-top"><span className="overview-stage-number">STAGE {s.number}</span><span className="overview-stage-state">{done?<Check size={13}/>:current?"Current": "Next"}</span></div><div className="overview-stage-icon"><Icon size={18}/></div><h3>{s.title}</h3><p>{s.description}</p><div className="overview-gate"><span>Human gate</span><strong>{s.gate}</strong></div></div>;})}</div>
   <div className="content-columns"><section className="surface-panel"><div className="panel-heading"><div><h2>Recent research runs</h2><p>Pick up where you left off.</p></div><button className="text-button" onClick={onViewRuns}>View all <ArrowRight size={15}/></button></div>{runs.length===0?<EmptyState icon={<FolderOpen size={22}/>} title="No research runs yet" description="Create a run to define the question, population and time horizon before starting detection." action={<button className="primary-button" onClick={onCreate}><Plus size={16}/> Create first run</button>}/>:<div className="run-list">{runs.slice(0,4).map(r=><RunRow key={r.id} run={r} active={r.id===activeRun?.id} onOpen={()=>onOpen(r)}/>)}</div>}</section>
