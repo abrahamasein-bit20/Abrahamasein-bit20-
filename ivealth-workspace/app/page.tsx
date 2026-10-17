@@ -47,7 +47,7 @@ export default function Home() {
   const [draftStep, setDraftStep] = useState(1);
   const [candidateOpen, setCandidateOpen] = useState(false);
   const [candidate, setCandidate] = useState({ title: "", population: "", geography: "Global", signal: "", evidence: "", alternative: "" });
-  const [decision, setDecision] = useState("approved");
+  const [decision, setDecision] = useState("");
   const [rationale, setRationale] = useState("");
   const [notice, setNotice] = useState("");
   const [noticeType, setNoticeType] = useState<"info" | "success" | "error">("info");
@@ -67,6 +67,8 @@ export default function Home() {
     setLoaded(true);
   }, []);
   useEffect(() => { if (loaded) { try { localStorage.setItem(STORE, JSON.stringify(runs)); } catch {} } }, [runs, loaded]);
+
+  useEffect(() => { setDecision(""); setRationale(""); }, [activeRunId]);
 
   const activeRun = runs.find(r => r.id === activeRunId) || null;
   const selected = activeRun?.concerns.filter(c => c.selected) || [];
@@ -106,6 +108,7 @@ export default function Home() {
   const toggleConcern = (id: string) => updateRun(r => ({ ...r, concerns: r.concerns.map(c => c.id === id ? { ...c, selected: !c.selected } : c) }));
   const recordDecision = () => {
     if (!activeRun) { announce("Create or select a research run first.", "error"); return; }
+    if (!decision) { announce("Choose a decision before recording it.", "error"); return; }
     if (!rationale.trim()) { announce("Add a brief rationale so the decision can be understood later.", "error"); return; }
     if (activeRun.stage === "world_concern_radar" && decision === "selected_items" && selected.length === 0) { announce("Select at least one problem ID before advancing.", "error"); return; }
     if (activeRun.stage === "world_concern_radar" && decision === "approved") { announce("For the Radar, select problem IDs, request evidence, revise, or stop.", "error"); return; }
@@ -114,6 +117,7 @@ export default function Home() {
     const advances = decision === "approved" || decision === "selected_items";
     updateRun(r => ({ ...r, decisions: [...r.decisions, d], stage: advances ? nextStage(r.stage) : r.stage }));
     setRationale("");
+    setDecision("");
     if (advances) {
       const next = stageFor(nextStage(activeRun.stage)).title;
       setView(next);
@@ -306,8 +310,9 @@ function DecisionHistory({items}:{items:Decision[]}) {
 
 function ProductDevelopmentBox({runs,onOpen}:{runs:Run[];onOpen:(run:Run)=>void}) {
   const approved = runs.flatMap(run => {
-    const approval = [...run.decisions].reverse().find(d => d.stage === "product_development" && d.decision === "approved");
-    if (!approval || run.stage !== "product_development") return [];
+    const latestProductDecision = [...run.decisions].reverse().find(d => d.stage === "product_development");
+    if (!latestProductDecision || latestProductDecision.decision !== "approved" || run.stage !== "product_development") return [];
+    const approval = latestProductDecision;
     return [{ run, approval, selectedProblems: run.concerns.filter(c => approval.selectedIds.includes(c.id)) }];
   }).sort((a,b) => b.approval.at.localeCompare(a.approval.at));
 
