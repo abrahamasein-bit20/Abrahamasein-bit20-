@@ -188,6 +188,11 @@ export default function Home() {
       <div className="rail-label">WORKSPACE</div>
       <nav className="primary-nav" aria-label="Main navigation">
         {mainNav.filter(item => item.label === "Overview" || item.label === "Research runs" || item.label === "Product Development Box").map(item => <NavButton key={item.label} item={item} active={view === item.label} onClick={() => goto(item.label)} />)}
+        <a href="/research-engine" className="primary-nav-item research-engine-entry" aria-label="Open AI Research Engine" style={{ background: "#e7f5f2", borderColor: "#c6e7df", color: "#115e59", marginTop: 7, minHeight: 48, textDecoration: "none" }}>
+          <FlaskConical size={17} />
+          <span style={{ display: "grid", gap: 2, minWidth: 0 }}><strong style={{ fontSize: 13 }}>AI Research Engine</strong><small style={{ fontSize: 11, fontWeight: 600, color: "#39766c" }}>Evidence-led scans</small></span>
+          <ArrowRight size={15} style={{ marginLeft: "auto" }} />
+        </a>
       </nav>
       <div className="rail-label rail-label-spaced">RESEARCH WORKFLOW</div>
       <nav className="workflow-nav" aria-label="Research workflow">{stageList.map((s, i) => {
@@ -241,7 +246,7 @@ export default function Home() {
       {[{label:"Overview" as View, short:"Home", icon:LayoutDashboard},{label:"Research runs" as View, short:"Runs", icon:FolderOpen},{label:activeRun ? stageFor(activeRun.stage).title : "Wellbeing Research" as View, short:"Current", icon:Activity},{label:"Decision log" as View, short:"Decisions", icon:ClipboardCheck}].map(item=>{const Icon=item.icon;return <button key={item.short} className={view===item.label?"selected":""} onClick={()=>goto(item.label)}><Icon size={19}/><small>{item.short}</small></button>;})}
       <button className={mobileMore?"selected":""} onClick={()=>setMobileMore(v=>!v)}><Menu size={19}/><small>More</small></button>
     </nav>
-    {mobileMore && <div className="mobile-more-menu">{stageList.map(s=><button key={s.key} onClick={()=>goto(s.title)}><span>{s.number}</span>{s.title}</button>)}<button onClick={()=>goto("Product Development Box")}><PackageCheck size={16}/> Product Development Box</button><button onClick={()=>goto("Evidence Library")}><BookOpen size={16}/> Evidence Library</button></div>}
+    {mobileMore && <div className="mobile-more-menu"><a href="/research-engine" className="mobile-more-engine-link" style={{ display: "flex", alignItems: "center", gap: 10, border: "1px solid #c6e7df", background: "#e7f5f2", textAlign: "left", padding: 12, borderRadius: 9, fontSize: 14, color: "#115e59", minHeight: 44, fontWeight: 750, textDecoration: "none" }}><FlaskConical size={16}/> AI Research Engine <ArrowRight size={14} style={{ marginLeft: "auto" }}/></a>{stageList.map(s=><button key={s.key} onClick={()=>goto(s.title)}><span>{s.number}</span>{s.title}</button>)}<button onClick={()=>goto("Product Development Box")}><PackageCheck size={16}/> Product Development Box</button><button onClick={()=>goto("Evidence Library")}><BookOpen size={16}/> Evidence Library</button></div>}
   </div>;
 }
 
