@@ -305,7 +305,82 @@ function EvidenceView({runs}:{runs:Run[]}) {
  const entries=runs.flatMap(r=>r.concerns.map(c=>({run:r,concern:c})));
  return <div className="view-stack"><PageIntro eyebrow="RESEARCH LIBRARY" title="Evidence library" description="Review source and counterevidence notes attached to candidate problems. This is a local view, not a verified source registry."/>{entries.length===0?<section className="surface-panel"><EmptyState icon={<BookOpen size={22}/>} title="No evidence notes yet" description="Add candidate problems with source details to see the evidence notes here."/></section>:<section className="surface-panel"><div className="panel-heading"><div><h2>Evidence notes</h2><p>{entries.length} candidate records across {runs.length} runs.</p></div></div><div className="evidence-library-list">{entries.map(({run,concern})=><article className="evidence-library-row" key={run.id+concern.id}><span className="candidate-id">{concern.id}</span><div><h3>{concern.title}</h3><p>{run.title} · {concern.population} · {concern.geography}</p><details className="evidence-details"><summary>Open evidence and counterevidence</summary><div className="evidence-detail-grid"><div><strong>Evidence</strong><p>{concern.evidence}</p></div><div><strong>Alternative / counterevidence</strong><p>{concern.alternative}</p></div></div></details></div></article>)}</div></section>}</div>;
 }
-function DecisionLog({run,runs,onSelect}:{run:Run|null;runs:Run[];onSelect:(r:Run)=>void}) {
- const all=runs.flatMap(r=>r.decisions.map(d=>({run:r,decision:d}))).sort((a,b)=>b.decision.at.localeCompare(a.decision.at));
- return <div className="view-stack"><PageIntro eyebrow="GOVERNANCE" title="Decision log" description="The record of reviewer choices, rationale and selected IDs. Decisions in this prototype are local records, not server-enforced approvals."/><section className="surface-panel"><div className="panel-heading"><div><h2>Human decisions</h2><p>{all.length} decisions across {runs.length} runs.</p></div>{run&&<span className="quiet-count">Active: {run.title}</span>}</div>{all.length===0?<EmptyState icon={<ClipboardCheck size={22}/>} title="No decisions recorded" description="Every stage ends with an explicit decision and rationale."/></>:<div className="decision-list">{all.map(({run:r,decision:d},i)=><article key={r.id+d.at+i} className="decision-card"><div className="decision-card-top"><span className="decision-icon"><CheckCircle2 size={16}/></span><div><strong>{stageFor(d.stage).title}</strong><small>{r.title} · {new Date(d.at).toLocaleString()}</small></div><span className="decision-type">{d.decision.replaceAll("_"," ")}</span></div><p>{d.rationale}</p><div className="decision-footer"><span>Selected IDs: {d.selectedIds.join(", ")||"None"}</span><button className="text-button" onClick={()=>onSelect(r)}>Open run <ArrowRight size={14}/></button></div></article>)}</div>}</section></div>;
+function DecisionLog({
+  run,
+  runs,
+  onSelect,
+}: {
+  run: Run | null;
+  runs: Run[];
+  onSelect: (r: Run) => void;
+}) {
+  const all = runs
+    .flatMap((item) =>
+      item.decisions.map((decision) => ({ run: item, decision })),
+    )
+    .sort((a, b) => b.decision.at.localeCompare(a.decision.at));
+
+  return (
+    <div className="view-stack">
+      <PageIntro
+        eyebrow="GOVERNANCE"
+        title="Decision log"
+        description="The record of reviewer choices, rationale and selected IDs. Decisions in this prototype are local records, not server-enforced approvals."
+      />
+      <section className="surface-panel">
+        <div className="panel-heading">
+          <div>
+            <h2>Human decisions</h2>
+            <p>{all.length} decisions across {runs.length} runs.</p>
+          </div>
+          {run ? (
+            <span className="quiet-count">Active: {run.title}</span>
+          ) : null}
+        </div>
+        {all.length === 0 ? (
+          <EmptyState
+            icon={<ClipboardCheck size={22} />}
+            title="No decisions recorded"
+            description="Every stage ends with an explicit decision and rationale."
+          />
+        ) : (
+          <div className="decision-list">
+            {all.map(({ run: itemRun, decision }, index) => (
+              <article
+                key={itemRun.id + decision.at + index}
+                className="decision-card"
+              >
+                <div className="decision-card-top">
+                  <span className="decision-icon">
+                    <CheckCircle2 size={16} />
+                  </span>
+                  <div>
+                    <strong>{stageFor(decision.stage).title}</strong>
+                    <small>
+                      {itemRun.title} · {new Date(decision.at).toLocaleString()}
+                    </small>
+                  </div>
+                  <span className="decision-type">
+                    {decision.decision.replaceAll("_", " ")}
+                  </span>
+                </div>
+                <p>{decision.rationale}</p>
+                <div className="decision-footer">
+                  <span>
+                    Selected IDs: {decision.selectedIds.join(", ") || "None"}
+                  </span>
+                  <button
+                    className="text-button"
+                    onClick={() => onSelect(itemRun)}
+                  >
+                    Open run <ArrowRight size={14} />
+                  </button>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
+    </div>
+  );
 }
