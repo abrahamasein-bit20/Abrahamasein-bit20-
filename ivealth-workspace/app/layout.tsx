@@ -3,6 +3,7 @@ import "./globals.css";
 import "./redesign.css";
 import "./product-redesign.css";
 import "./layout-v2.css";
+import "./overhaul.css";
 
 export const metadata: Metadata = {
   title: "iValth | Wellbeing Research Workspace",
