@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import type { CSSProperties, FormEvent } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { House, Microscope } from "lucide-react";
 import "./research-engine.css";
 
 type Candidate = {
@@ -397,8 +398,8 @@ export default function ResearchEnginePage() {
 
       <aside className="engine-sidebar" aria-label="Research engine navigation">
         <div className="engine-sidebar-label">WORKSPACE</div>
-        <a href="/" className="engine-side-link"><span className="engine-side-icon">⌂</span><span><strong>Research Studio</strong><small>Overview & workflow</small></span></a>
-        <a href="/research-engine" className="engine-side-link is-active" aria-current="page"><span className="engine-side-icon">⌕</span><span><strong>AI Research Engine</strong><small>Evidence-led scans</small></span></a>
+        <a href="/" className="engine-side-link"><span className="engine-side-icon"><House size={15} aria-hidden="true" /></span><span><strong>Research Studio</strong><small>Overview & workflow</small></span></a>
+        <a href="/research-engine" className="engine-side-link is-active" aria-current="page"><span className="engine-side-icon"><Microscope size={15} aria-hidden="true" /></span><span><strong>AI Research Engine</strong><small>Evidence-led scans</small></span></a>
         <div className="engine-sidebar-label engine-sidebar-spaced">RESEARCH PIPELINE</div>
         <div className="engine-pipeline">
           <div><span>00</span><p><strong>Wellbeing Research</strong><small>Define the question</small></p></div>
