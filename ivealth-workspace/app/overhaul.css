@@ -18,7 +18,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
 button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible {
   outline: 3px solid rgba(105, 143, 85, .38) !important; outline-offset: 3px;
 }
-.app-shell { min-height: 100vh; background: var(--ov-paper) !important; }
+.app-shell { display:flex !important; flex-direction:column !important; grid-template-columns:none !important; min-height:100vh; background:var(--ov-paper) !important; }
 .studio-topbar-v2 {
   position: relative; z-index: 5; display: grid; grid-template-columns: auto minmax(0,1fr) auto;
   align-items: center; gap: 26px; min-height: 78px; padding: 0 clamp(20px,4vw,58px);
