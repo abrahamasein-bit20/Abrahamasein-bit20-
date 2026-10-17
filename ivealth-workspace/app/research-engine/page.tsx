@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import type { CSSProperties, FormEvent } from "react";
 import { createClient } from "@/lib/supabase/client";
+import "./research-engine.css";
 
 type Candidate = {
   id?: string;
@@ -103,30 +104,32 @@ type ConnectionState = "checking" | "ready" | "config_missing" | "signed_out" | 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
 const cardStyle: CSSProperties = {
-  background: "var(--panel, #ffffff)",
-  border: "1px solid var(--line, #dfe6df)",
-  borderRadius: 14,
-  padding: 18,
+  background: "#ffffff",
+  border: "1px solid #e0e8f1",
+  borderRadius: 18,
+  padding: 24,
+  boxShadow: "0 7px 24px rgba(18, 38, 63, .045)",
 };
 const fieldStyle: React.CSSProperties = {
   width: "100%",
-  border: "1px solid var(--line, #dfe6df)",
-  borderRadius: 9,
-  padding: "11px 12px",
-  background: "var(--panel, #ffffff)",
-  color: "var(--text, #17231f)",
+  border: "1px solid #d6e0ec",
+  borderRadius: 11,
+  padding: "12px 14px",
+  background: "#f9fbfd",
+  color: "#14253b",
   font: "inherit",
 };
 const buttonStyle: React.CSSProperties = {
-  border: 0,
-  borderRadius: 9,
-  padding: "11px 15px",
-  background: "#215b48",
+  border: "1px solid #0f766e",
+  borderRadius: 11,
+  padding: "12px 17px",
+  background: "#0f766e",
   color: "#ffffff",
-  fontWeight: 700,
+  fontWeight: 750,
   cursor: "pointer",
+  boxShadow: "0 3px 9px rgba(15, 118, 110, .14)",
 };
-const mutedStyle: React.CSSProperties = { color: "var(--muted, #66766d)", fontSize: 13, lineHeight: 1.6 };
+const mutedStyle: React.CSSProperties = { color: "#53657a", fontSize: 13, lineHeight: 1.7 };
 const statusStyle: React.CSSProperties = {
   padding: "10px 12px",
   borderRadius: 9,
@@ -377,13 +380,14 @@ export default function ResearchEnginePage() {
   const claims = Array.isArray(result?.claim_ledger) ? result.claim_ledger : [];
 
   return (
-    <main style={{ maxWidth: 1120, margin: "0 auto", padding: "28px 20px 72px", color: "var(--text, #17231f)" }}>
-      <header style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 16, marginBottom: 24 }}>
+    <main className="research-engine-page" style={{ maxWidth: "none", margin: 0, padding: 0, color: "#14253b" }}>
+      <header className="research-engine-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 16, marginBottom: 24 }}>
         <div>
           <a href="/" style={{ color: "#215b48", fontSize: 13, fontWeight: 700, textDecoration: "none" }}>← Back to Research Studio</a>
           <p style={{ margin: "18px 0 6px", fontSize: 11, letterSpacing: 1.5, fontWeight: 800, color: "var(--muted, #66766d)" }}>IVALTh · RESEARCH ENGINE</p>
           <h1 style={{ fontSize: "clamp(28px, 4vw, 40px)", letterSpacing: -1.3, margin: "0 0 10px" }}>Evidence-led research run</h1>
           <p style={{ ...mutedStyle, maxWidth: 740, margin: 0 }}>Run a bounded first-pass World Concern Radar scan, save the source and claim ledgers in Supabase, then optionally request a second-model critique. Human approval remains mandatory.</p>
+          <div className="engine-capabilities" aria-label="Research engine capabilities"><span>Source trace</span><span>Claim ledger</span><span>Human approval gates</span><span>Saved research history</span></div>
         </div>
         <div style={{ ...cardStyle, padding: "10px 13px", minWidth: 190 }}>
           <div style={{ fontSize: 11, color: "var(--muted, #66766d)", marginBottom: 3 }}>SESSION</div>
@@ -454,7 +458,7 @@ export default function ResearchEnginePage() {
         </form>
       </section>
 
-      {job && <section style={{ display: "grid", gap: 18 }}>
+      {job && <section className="re-results" style={{ display: "grid", gap: 18 }}>
         <section style={cardStyle}>
           <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap", alignItems: "flex-start" }}>
             <div>
