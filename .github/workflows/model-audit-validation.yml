@@ -12,6 +12,8 @@ on:
       - "research/open-model-stack"
     paths:
       - "world-concern-radar/supabase/functions/ivealth-model-audit/**"
+      - "world-concern-radar/supabase/functions/ivealth-research-service/**"
+      - "ivealth-workspace/app/research-engine/page.tsx"
       - ".github/workflows/model-audit-validation.yml"
   workflow_dispatch:
 
