@@ -8,6 +8,7 @@ import {
   FolderOpen, HeartPulse, LayoutDashboard, ListChecks, Menu, Plus,
   Search, ShieldAlert, Target, X
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
 type StageKey = "wellbeing_research" | "world_concern_radar" | "problem_validation" | "opportunity_validation" | "product_development";
 type Concern = { id: string; title: string; population: string; geography: string; signal: string; evidence: string; alternative: string; selected: boolean; status: string };
@@ -24,7 +25,7 @@ const stageList: { key: StageKey; number: string; title: View; short: string; ga
   { key: "product_development", number: "04", title: "Product Development", short: "Design an experiment", gate: "Approve experiment", description: "Translate an approved opportunity into a testable product hypothesis." }
 ];
 
-const mainNav: { label: View; icon: typeof LayoutDashboard }[] = [
+const mainNav: { label: View; icon: LucideIcon }[] = [
   { label: "Overview", icon: LayoutDashboard },
   { label: "Research runs", icon: FolderOpen },
   { label: "Evidence Library", icon: BookOpen },
