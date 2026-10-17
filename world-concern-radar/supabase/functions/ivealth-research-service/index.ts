@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.0";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-workspace-id",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
   "Content-Type": "application/json; charset=utf-8",
 };
@@ -83,13 +83,10 @@ Deno.serve(async (req: Request) => {
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
   if (!supabaseUrl || !anonKey || !serviceKey) return reply({ error: "Server Supabase configuration is incomplete." }, 500);
 
-  const authHeader = req.headers.get("Authorization") ?? "";
-  const token = authHeader.replace(/^Bearer\s+/i, "");
-  if (!token || token === authHeader) return reply({ error: "A valid Supabase user access token is required." }, 401);
-  const authClient = createClient(supabaseUrl, anonKey, { auth: { persistSession: false, autoRefreshToken: false }, global: { headers: { Authorization: `Bearer ${token}` } } });
-  const { data: userData, error: authError } = await authClient.auth.getUser(token);
-  if (authError || !userData.user) return reply({ error: "Authentication failed. Sign in to iValth and retry." }, 401);
-  const user = userData.user;
+  const workspaceId = req.headers.get("x-workspace-id") ?? "";
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(workspaceId)) {
+    return reply({ error: "Workspace ID is missing or invalid. Reload the page and retry." }, 400);
+  }
   const db = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } });
 
   const url = new URL(req.url);
@@ -97,21 +94,25 @@ Deno.serve(async (req: Request) => {
   const base = parts.indexOf("ivealth-research-service");
   const route = parts.slice(base + 1);
   if (route[0] === "health" && req.method === "GET") {
-    return reply({ service: "ivealth-research-service", status: "ready", userAuthenticated: true, researchProviderConfigured: Boolean(Deno.env.get("OPENAI_API_KEY")), provider: "OpenAI Responses API with web search", note: "This service performs a research pass on request; it is not a continuous crawler." });
+    return reply({ service: "ivealth-research-service", status: "ready", authenticationRequired: false,researchProviderConfigured: Boolean(Deno.env.get("OPENAI_API_KEY")), provider: "OpenAI Responses API with web search", note: "This service performs a research pass on request; it is not a continuous crawler." });
   }
   if (route[0] === "jobs" && route.length === 1 && req.method === "GET") {
-    const { data, error } = await db.from("research_jobs").select("id,title,research_question,geography,population,time_window,evidence_cutoff,status,provider,model,error_summary,started_at,completed_at,created_at,updated_at").eq("user_id", user.id).order("created_at", { ascending: false }).limit(50);
+    const { data, error } = await db.from("research_jobs").select("id,title,research_question,geography,population,time_window,evidence_cutoff,status,provider,model,error_summary,started_at,completed_at,created_at,updated_at").eq("guest_id", workspaceId).order("created_at", { ascending: false }).limit(50);
     if (error) return reply({ error: "Could not list research jobs." }, 500);
     return reply({ jobs: data ?? [] });
   }
   if (route[0] === "jobs" && route.length === 1 && req.method === "POST") {
+    const { count: recentCount, error: rateError } = await db.from("research_jobs").select("id", { count: "exact", head: true }).eq("guest_id", workspaceId).gte("created_at", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
+    if (rateError) return reply({ error: "Could not check the workspace request limit." }, 500);
+    if ((recentCount ?? 0) >= 5) return reply({ error: "This browser workspace has reached its limit of 5 research runs per 24 hours." }, 429);
     const body = await json(req);
     if (!body || typeof body.title !== "string" || typeof body.research_question !== "string" || body.title.trim().length < 1 || body.title.length > 240 || body.research_question.trim().length < 10 || body.research_question.length > 5000) {
       return reply({ error: "Provide a title and a research_question between 10 and 5000 characters." }, 400);
     }
     const openaiKey = Deno.env.get("OPENAI_API_KEY");
     const payload = {
-      user_id: user.id,
+      user_id: null,
+      guest_id: workspaceId,
       title: body.title.trim(),
       research_question: body.research_question.trim(),
       geography: String(body.geography || "Global").slice(0, 200),
@@ -233,17 +234,17 @@ Keep source_ids consistent. If no credible source can be verified, return an emp
         ],
       };
       const status = result.status === "complete" ? "complete" : "complete_with_limitations";
-      const { data: updated, error: updateError } = await db.from("research_jobs").update({ status, result, model: researchModel, completed_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq("id", job.id).eq("user_id", user.id).select("*").single();
+      const { data: updated, error: updateError } = await db.from("research_jobs").update({ status, result, model: researchModel, completed_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq("id", job.id).eq("guest_id", workspaceId).select("*").single();
       if (updateError || !updated) throw new Error("Research finished but saving the result failed.");
       return reply({ job: updated });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown research error";
-      await db.from("research_jobs").update({ status: "failed", error_summary: message.slice(0, 1000), completed_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq("id", job.id).eq("user_id", user.id);
+      await db.from("research_jobs").update({ status: "failed", error_summary: message.slice(0, 1000), completed_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq("id", job.id).eq("guest_id", workspaceId);
       return reply({ job_id: job.id, status: "failed", error: message, next_step: "Check the OpenAI API key, provider permissions and Supabase function logs." }, 502);
     }
   }
   if (route[0] === "jobs" && route.length === 2 && req.method === "GET") {
-    const { data, error } = await db.from("research_jobs").select("*").eq("id", route[1]).eq("user_id", user.id).maybeSingle();
+    const { data, error } = await db.from("research_jobs").select("*").eq("id", route[1]).eq("guest_id", workspaceId).maybeSingle();
     if (error) return reply({ error: "Could not load research job." }, 500);
     if (!data) return reply({ error: "Research job not found." }, 404);
     return reply({ job: data });
