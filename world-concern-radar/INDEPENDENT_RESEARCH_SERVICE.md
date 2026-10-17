@@ -10,12 +10,12 @@ A standalone, request-triggered research API deployed as a Supabase Edge Functio
 - Provider: OpenAI Responses API with `web_search`
 - Current operation is request-triggered, not a scheduled continuous crawler.
 - Authentication is required: send a Supabase user access token as a Bearer token. Service-role credentials remain server-side.
-- The result is a first-pass research artifact, not a guarantee of complete global coverage or independent source verification. Human approval gates remain mandatory.
+- The result is a first-pass research artifact, not a guarantee of complete global coverage or independent source verification. Human approval gates remain mandatory. The deployed research function requires web search on each request and records an API search trace (sources and citation annotations). A URL observed in that trace is not proof that the source supports the linked claim; unobserved or invalid source-ledger URLs are flagged for manual review.
 - The function returns a clear configuration error until `OPENAI_API_KEY` is set as a Supabase Edge Function secret.
 
 ## Configure provider
 
-Set `OPENAI_API_KEY` as a Supabase Edge Function secret for the selected project. Never put it in Vercel `NEXT_PUBLIC_*` variables or browser code. Optional secret `OPENAI_RESEARCH_MODEL` overrides the default `gpt-4.1`.
+Set `OPENAI_API_KEY` as a Supabase Edge Function secret for the selected project. Never put it in Vercel `NEXT_PUBLIC_*` variables or browser code. Optional secret `OPENAI_RESEARCH_MODEL` overrides the default `gpt-6.1-sol`; optional `OPENAI_REASONING_EFFORT` defaults to `medium` for GPT-5/GPT-6 model IDs. The key must be copied from the OpenAI Platform key setup flow and saved separately in Supabase Edge Function Secrets; creating the key does not configure Supabase automatically.
 
 ## Optional second-model critique
 
