@@ -6,7 +6,7 @@ import {
   Activity, ArrowRight, BookOpen, Check, CheckCircle2, Download,
   ChevronRight, ClipboardCheck, FileJson, FlaskConical,
   FolderOpen, HeartPulse, LayoutDashboard, ListChecks, Menu, PackageCheck, Plus,
-  Search, ShieldAlert, Target, X
+  Search, ShieldAlert, Target, X, Sun, Moon
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -55,6 +55,18 @@ export default function Home() {
   const [exportText, setExportText] = useState("");
   const [mobileMore, setMobileMore] = useState(false);
   const [importBusy, setImportBusy] = useState(false);
+  const [theme, setTheme] = useState<"light" | "dark">("light");
+
+  useEffect(() => {
+    try {
+      const savedTheme = localStorage.getItem("ivealth_theme");
+      if (savedTheme === "dark" || savedTheme === "light") setTheme(savedTheme);
+    } catch {}
+  }, []);
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    try { localStorage.setItem("ivealth_theme", theme); } catch {}
+  }, [theme]);
 
   useEffect(() => {
     try {
@@ -190,13 +202,14 @@ export default function Home() {
       </div>
     </aside>
 
-    <div className="mobile-header"><button className="mobile-brand" onClick={() => goto("Overview")}><span className="brand-mark">i</span><span><strong>iValth</strong><small>Research Studio</small></span></button><span className="prototype-pill">Prototype</span></div>
+    <div className="mobile-header"><button className="mobile-brand" onClick={() => goto("Overview")}><span className="brand-mark">i</span><span><strong>iValth</strong><small>Research Studio</small></span></button><button className="theme-toggle mobile-theme-toggle" onClick={() => setTheme(v => v === "dark" ? "light" : "dark")} aria-label={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"} title={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}>{theme === "dark" ? <Sun size={17}/> : <Moon size={17}/>}</button><span className="prototype-pill">Prototype</span></div>
 
     <main className="main-content">
       <header className="page-toolbar">
         <div className="breadcrumbs"><span>iValth</span><ChevronRight size={14}/><strong>{view}</strong></div>
         <div className="toolbar-actions">
-          {activeRun && <button className="subtle-button" onClick={exportRun}><FileJson size={15}/> Export run</button>}
+          <button className="theme-toggle" onClick={() => setTheme(v => v === "dark" ? "light" : "dark")} aria-label={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"} title={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}>{theme === "dark" ? <Sun size={16}/> : <Moon size={16}/>}<span>{theme === "dark" ? "Light mode" : "Dark mode"}</span></button>
+          {activeRun && <button className="subtle-button" onClick={exportRun}><FileJson size={15}/> Export run</button>
           <button className="primary-button" onClick={openCreate}><Plus size={17}/> <span>New research run</span></button>
         </div>
       </header>
