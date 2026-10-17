@@ -3,8 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import type { ChangeEvent, ReactNode } from "react";
 import {
-  Activity, ArrowRight, ArrowUpRight, BookOpen, Check, CheckCircle2,
-  ChevronRight, ClipboardCheck, FileJson, FileText, FlaskConical,
+  Activity, ArrowRight, BookOpen, Check, CheckCircle2,
+  ChevronRight, ClipboardCheck, FileJson, FlaskConical,
   FolderOpen, HeartPulse, LayoutDashboard, ListChecks, Menu, Plus,
   Search, ShieldAlert, Target, X
 } from "lucide-react";
@@ -162,10 +162,6 @@ export default function Home() {
     a.click(); URL.revokeObjectURL(url);
   };
 
-  const allNav: { label: View; icon: typeof LayoutDashboard }[] = [
-    ...mainNav.slice(0, 2), ...stageList.map(s => ({ label: s.title, icon: s.key === "wellbeing_research" ? HeartPulse : s.key === "world_concern_radar" ? Activity : s.key === "problem_validation" ? ListChecks : s.key === "opportunity_validation" ? Target : FlaskConical })),
-    ...mainNav.slice(2)
-  ] as { label: View; icon: typeof LayoutDashboard }[];
   const goto = (v: View) => { setView(v); setMobileMore(false); setNotice(""); };
   const startOrResume = () => { if (!activeRun) openCreate(); else goto(stageFor(activeRun.stage).title); };
 
