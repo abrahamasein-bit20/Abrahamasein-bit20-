@@ -395,6 +395,21 @@ export default function ResearchEnginePage() {
         </div>
       </header>
 
+      <aside className="engine-sidebar" aria-label="Research engine navigation">
+        <div className="engine-sidebar-label">WORKSPACE</div>
+        <a href="/" className="engine-side-link"><span className="engine-side-icon">⌂</span><span><strong>Research Studio</strong><small>Overview & workflow</small></span></a>
+        <a href="/research-engine" className="engine-side-link is-active" aria-current="page"><span className="engine-side-icon">⌕</span><span><strong>AI Research Engine</strong><small>Evidence-led scans</small></span></a>
+        <div className="engine-sidebar-label engine-sidebar-spaced">RESEARCH PIPELINE</div>
+        <div className="engine-pipeline">
+          <div><span>00</span><p><strong>Wellbeing Research</strong><small>Define the question</small></p></div>
+          <div className="is-current"><span>01</span><p><strong>World Concern Radar</strong><small>Identify candidate concerns</small></p></div>
+          <div><span>02</span><p><strong>Problem Validation</strong><small>Test evidence and trajectory</small></p></div>
+          <div><span>03</span><p><strong>Opportunity Validation</strong><small>Test possible responses</small></p></div>
+          <div><span>04</span><p><strong>Product Development</strong><small>Design a testable experiment</small></p></div>
+        </div>
+        <div className="engine-sidebar-note"><strong>Research standard</strong><p>Unknown is not zero. Claims remain provisional until sources and counterevidence are checked.</p></div>
+      </aside>
+      <div className="research-engine-content">
       {connection === "config_missing" && <section style={{ ...cardStyle, marginBottom: 20 }}>
         <h2 style={{ marginTop: 0, fontSize: 18 }}>Supabase configuration is missing</h2>
         <p style={mutedStyle}>Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in the workspace deployment, then redeploy. These are the public client URL and key; never put a service-role key in the browser.</p>
@@ -578,6 +593,7 @@ export default function ResearchEnginePage() {
       <footer style={{ ...mutedStyle, marginTop: 22, fontSize: 11 }}>
         Research jobs are persisted to Supabase under the signed-in user. The browser-only Research Studio runs are not automatically imported here. Provider credentials stay server-side. All model outputs remain provisional pending source-level verification and human review.
       </footer>
+      </div>
     </main>
   );
 }
