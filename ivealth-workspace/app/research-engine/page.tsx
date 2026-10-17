@@ -145,6 +145,12 @@ function textOf(value: unknown, fallback = "UNKNOWN"): string {
 function listOf(value: unknown): string[] {
   return Array.isArray(value) ? value.map(item => textOf(item, "")).filter(Boolean) : [];
 }
+function searchTraceLabel(value: unknown): string {
+  if (value === "url_observed_in_openai_search_trace") return "URL appeared in returned search results; claim support still needs checking";
+  if (value === "not_observed_in_returned_search_trace_manual_check_required") return "Not observed in returned search results; manual check required";
+  if (value === "missing_or_invalid_url_manual_check_required") return "Missing or invalid URL; manual check required";
+  return textOf(value);
+}
 function safeWebUrl(value: unknown): string | null {
   if (typeof value !== "string") return null;
   try {
@@ -178,6 +184,7 @@ export default function ResearchEnginePage() {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [job, setJob] = useState<ResearchJob | null>(null);
+  const [recentJobs, setRecentJobs] = useState<ResearchJob[]>([]);
   const [confirmExternalProcessing, setConfirmExternalProcessing] = useState(false);
 
   useEffect(() => {
@@ -224,6 +231,29 @@ export default function ResearchEnginePage() {
       setError(authError instanceof Error ? authError.message : "Supabase is not configured.");
     }
   }, []);
+
+  useEffect(() => {
+    if (connection !== "ready") return;
+    let active = true;
+    void (async () => {
+      const supabase = createClient();
+      const { data } = await supabase.auth.getSession();
+      if (!data.session?.access_token) return;
+      const response = await fetch(supabaseUrl + "/functions/v1/ivealth-research-service/jobs", {
+        headers: {
+          apikey: supabaseKey,
+          Authorization: "Bearer " + data.session.access_token,
+          "Content-Type": "application/json",
+        },
+      });
+      const body = await response.json().catch(() => ({}));
+      if (!active || !response.ok) return;
+      setRecentJobs(Array.isArray(body.jobs) ? body.jobs as ResearchJob[] : []);
+    })().catch(() => {
+      if (active) setRecentJobs([]);
+    });
+    return () => { active = false; };
+  }, [connection]);
 
   async function getAuthHeaders(): Promise<Record<string, string>> {
     if (!supabaseUrl || !supabaseKey) throw new Error("Supabase configuration is missing.");
@@ -278,10 +308,32 @@ export default function ResearchEnginePage() {
       const saved = body.job as ResearchJob | undefined;
       if (!saved?.id) throw new Error("The research service returned no saved job ID.");
       setJob(saved);
+      setRecentJobs(previous => [saved, ...previous.filter(item => item.id !== saved.id)].slice(0, 15));
       setMessage("Research request saved. Treat this first pass as provisional and review the source and claim ledgers before making a decision.");
       if (saved.status === "failed") setError(saved.error_summary || "The research job failed.");
     } catch (runError) {
       setError(runError instanceof Error ? runError.message : "The research request could not be completed.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function loadJob(jobId: string) {
+    setBusy(true);
+    setError("");
+    setMessage("");
+    try {
+      const headers = await getAuthHeaders();
+      const response = await fetch(supabaseUrl + "/functions/v1/ivealth-research-service/jobs/" + encodeURIComponent(jobId), { headers });
+      const body = await parseResponse(response);
+      const saved = body.job as ResearchJob | undefined;
+      if (!saved?.id) throw new Error("The research service returned no saved job.");
+      setJob(saved);
+      setRecentJobs(previous => [saved, ...previous.filter(item => item.id !== saved.id)].slice(0, 15));
+      setMessage("Loaded the saved research run. Re-check its source trace and claim ledger before relying on the output.");
+      setConfirmExternalProcessing(false);
+    } catch (loadError) {
+      setError(loadError instanceof Error ? loadError.message : "Could not load the saved research run.");
     } finally {
       setBusy(false);
     }
@@ -307,6 +359,7 @@ export default function ResearchEnginePage() {
       const saved = body.job as ResearchJob | undefined;
       if (!saved?.id) throw new Error("The audit service returned no saved job.");
       setJob(saved);
+      setRecentJobs(previous => [saved, ...previous.filter(item => item.id !== saved.id)].slice(0, 15));
       setMessage("The model critique was saved. Its findings are unverified review flags, not independent source verification.");
       setConfirmExternalProcessing(false);
     } catch (auditError) {
@@ -353,6 +406,20 @@ export default function ResearchEnginePage() {
       {connection === "error" && <p role="alert" style={{ ...statusStyle, color: "#8d2c20", marginBottom: 18 }}>{error || "Unable to connect to Supabase."}</p>}
       {message && <p role="status" style={{ ...statusStyle, marginBottom: 18 }}>{message}</p>}
       {error && connection !== "error" && <pre role="alert" style={{ ...statusStyle, color: "#8d2c20", whiteSpace: "pre-wrap", margin: "0 0 18px", fontFamily: "inherit" }}>{error}</pre>}
+
+      {recentJobs.length > 0 && <section style={{ ...cardStyle, marginBottom: 20 }}>
+        <h2 style={{ fontSize: 18, margin: "0 0 6px" }}>Saved research runs</h2>
+        <p style={{ ...mutedStyle, margin: "0 0 12px" }}>Load a previous saved run from Supabase. Recent list is limited to 15 entries.</p>
+        <div style={{ display: "grid", gap: 8 }}>
+          {recentJobs.map(item => <div key={item.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap", border: "1px solid var(--line, #dfe6df)", borderRadius: 9, padding: 10 }}>
+            <div>
+              <strong style={{ fontSize: 13 }}>{item.title}</strong>
+              <p style={{ ...mutedStyle, margin: "3px 0 0" }}>{item.status}{item.model ? " · " + item.model : ""}{item.created_at ? " · " + new Date(item.created_at).toLocaleString() : ""}</p>
+            </div>
+            <button type="button" disabled={busy} onClick={() => void loadJob(item.id)} style={{ ...buttonStyle, padding: "8px 11px", background: "#e9f1ea", color: "#215b48", opacity: busy ? 0.6 : 1 }}>Load run</button>
+          </div>)}
+        </div>
+      </section>}
 
       <section style={{ ...cardStyle, marginBottom: 20 }}>
         <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
@@ -458,7 +525,7 @@ export default function ResearchEnginePage() {
                   <p style={{ ...mutedStyle, margin: "3px 0" }}>{textOf(source.publisher)} · {textOf(source.publication_date)} · {textOf(source.evidence_class)}</p>
                   <p style={{ ...mutedStyle, margin: "3px 0" }}>Geography: {textOf(source.geography)} · Population: {textOf(source.population)} · Period: {textOf(source.period)}</p>
                   <p style={{ ...mutedStyle, margin: "3px 0" }}>Measure / denominator: {textOf(source.measure_and_denominator)}</p>
-                  <p style={{ ...mutedStyle, margin: "3px 0" }}>Verification: {textOf(source.verification_status)} · Search trace: {textOf(source.search_trace_status)} · Limitations: {textOf(source.limitations)}</p>
+                  <p style={{ ...mutedStyle, margin: "3px 0" }}>Verification: {textOf(source.verification_status)} · Search trace: {searchTraceLabel(source.search_trace_status)} · Limitations: {textOf(source.limitations)}</p>
                   {url && <a href={url} target="_blank" rel="noreferrer" style={{ color: "#215b48", fontSize: 12, overflowWrap: "anywhere" }}>{url}</a>}
                 </article>;
               })}
