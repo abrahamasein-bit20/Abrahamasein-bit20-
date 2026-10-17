@@ -133,7 +133,7 @@ ${JSON.stringify(job.result).slice(0, 70000)}`;
 
     let audit: Record<string, unknown>;
     try {
-      const cleaned = output.trim().replace(/^\`\`\`(?:json)?\s*/i, "").replace(/\s*\`\`\`$/, "");
+      const cleaned = output.trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
       audit = JSON.parse(cleaned);
     } catch {
       return reply({ error: "The model audit provider did not return valid JSON.", output_excerpt: output.slice(0, 500) }, 502);
