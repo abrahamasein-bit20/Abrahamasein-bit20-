@@ -183,42 +183,22 @@ export default function Home() {
   const startOrResume = () => { if (!activeRun) openCreate(); else goto(stageFor(activeRun.stage).title); };
 
   return <div className="app-shell">
-    <aside className="side-rail">
-      <div className="brand-lockup"><div className="brand-mark">i</div><div><div className="brand-name">iValth</div><div className="brand-sub">RESEARCH STUDIO</div></div></div>
-      <div className="rail-label">WORKSPACE</div>
-      <nav className="primary-nav" aria-label="Main navigation">
-        {mainNav.filter(item => item.label === "Overview" || item.label === "Research runs" || item.label === "Product Development Box").map(item => <NavButton key={item.label} item={item} active={view === item.label} onClick={() => goto(item.label)} />)}
-        <a href="/research-engine" className="primary-nav-item research-engine-entry" aria-label="Open AI Research Engine" style={{ background: "#e7f5f2", borderColor: "#c6e7df", color: "#115e59", marginTop: 7, minHeight: 48, textDecoration: "none" }}>
-          <FlaskConical size={17} />
-          <span style={{ display: "grid", gap: 2, minWidth: 0 }}><strong style={{ fontSize: 13 }}>AI Research Engine</strong><small style={{ fontSize: 11, fontWeight: 600, color: "#39766c" }}>Evidence-led scans</small></span>
-          <ArrowRight size={15} style={{ marginLeft: "auto" }} />
-        </a>
-      </nav>
-      <div className="rail-label rail-label-spaced">RESEARCH WORKFLOW</div>
-      <nav className="workflow-nav" aria-label="Research workflow">{stageList.map((s, i) => {
-        const Icon = [HeartPulse, Activity, ListChecks, Target, FlaskConical][i];
-        const state = activeRun ? (i < activeStageIndex ? "complete" : i === activeStageIndex ? "current" : "locked") : (i === 0 ? "current" : "locked");
-        return <button key={s.key} className={"workflow-nav-item " + (view === s.title ? "active " : "") + state} onClick={() => goto(s.title)}><span className="nav-stage-icon">{state === "complete" ? <Check size={15}/> : <Icon size={16}/>}</span><span className="workflow-nav-copy"><span>{s.title}</span><small>Stage {s.number}</small></span>{state === "current" && <span className="current-indicator"/>}</button>;
-      })}</nav>
-      <div className="rail-bottom">
-        <div className="rail-bottom-title"><ShieldAlert size={15}/> Prototype mode</div>
-        <p>Research Studio runs stay in this browser. Use AI Research Engine for authenticated API research jobs.</p>
-        <div className="rail-storage"><span/> Browser storage active</div>
+    <header className="studio-topbar-v2">
+      <button className="studio-brand-v2" onClick={() => goto("Overview")} aria-label="iValth home"><span className="studio-brand-mark-v2">iv</span><span className="studio-brand-copy-v2"><strong>iValth</strong><small>WELLBEING INTELLIGENCE</small></span></button>
+      <nav className="studio-primary-nav-v2" aria-label="Workspace navigation">{mainNav.map(item => <NavButton key={item.label} item={item} active={view === item.label} onClick={() => goto(item.label)} />)}</nav>
+      <div className="studio-topbar-actions-v2">
+        <button className="studio-icon-action-v2" onClick={() => setTheme(v => v === "dark" ? "light" : "dark")} aria-label={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"} title={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}>{theme === "dark" ? <Sun size={17}/> : <Moon size={17}/>}</button>
+        <a href="/research-engine" className="studio-engine-link-v2"><FlaskConical size={16}/><span>AI Research Engine</span><ArrowRight size={14}/></a>
+        <button className="studio-new-run-v2" onClick={openCreate}><Plus size={17}/><span>New research</span></button>
       </div>
-    </aside>
-
-    <div className="mobile-header"><button className="mobile-brand" onClick={() => goto("Overview")}><span className="brand-mark">i</span><span><strong>iValth</strong><small>Research Studio</small></span></button><button className="theme-toggle mobile-theme-toggle" onClick={() => setTheme(v => v === "dark" ? "light" : "dark")} aria-label={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"} title={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}>{theme === "dark" ? <Sun size={17}/> : <Moon size={17}/>}</button><span className="prototype-pill">Prototype</span></div>
-
-    <main className="main-content">
-      <header className="page-toolbar">
-        <div className="breadcrumbs"><span>iValth</span><ChevronRight size={14}/><strong>{view}</strong></div>
-        <div className="toolbar-actions">
-          <button className="theme-toggle" onClick={() => setTheme(v => v === "dark" ? "light" : "dark")} aria-label={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"} title={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}>{theme === "dark" ? <Sun size={16}/> : <Moon size={16}/>}<span>{theme === "dark" ? "Light mode" : "Dark mode"}</span></button>
-          {activeRun && <button className="subtle-button" onClick={exportRun}><FileJson size={15}/> Export run</button>}
-          <a href="/research-engine" className="subtle-button" style={{ textDecoration: "none" }}><FlaskConical size={15}/> <span>AI Research Engine</span></a>
-          <button className="primary-button" onClick={openCreate}><Plus size={17}/> <span>New research run</span></button>
-        </div>
-      </header>
+    </header>
+    <nav className="studio-workflow-strip-v2" aria-label="Five-stage research workflow">
+      <div className="studio-workflow-label-v2"><span className="studio-live-dot-v2"/><span>RESEARCH PIPELINE</span></div>
+      {stageList.map((s, i) => { const Icon = [HeartPulse, Activity, ListChecks, Target, FlaskConical][i]; const state = activeRun ? (i < activeStageIndex ? "complete" : i === activeStageIndex ? "current" : "locked") : (i === 0 ? "current" : "locked"); return <button key={s.key} className={"studio-workflow-step-v2 " + state + (view === s.title ? " selected" : "")} onClick={() => goto(s.title)}><span className="studio-workflow-number-v2">{state === "complete" ? <Check size={14}/> : <Icon size={15}/>}</span><span className="studio-workflow-step-copy-v2"><strong>{s.title}</strong><small>{s.short}</small></span>{i < stageList.length - 1 && <span className="studio-workflow-connector-v2"/>}</button>; })}
+    </nav>
+    <div className="studio-prototype-banner-v2"><ShieldAlert size={14}/><span>Human-reviewed research workspace</span><span className="studio-prototype-separator-v2">/</span><span>Findings remain provisional until sources are checked</span></div>
+    <main className="main-content studio-main-v2">
+      <header className="studio-page-context-v2"><div className="studio-breadcrumbs-v2"><span>Workspace</span><ChevronRight size={14}/><strong>{view}</strong></div>{activeRun && <div className="studio-active-run-v2"><span className="studio-active-run-dot-v2"/><span>ACTIVE RUN</span><strong>{activeRun.title}</strong></div>}{activeRun && <button className="studio-export-action-v2" onClick={exportRun}><FileJson size={15}/> Export data</button>}</header>
 
       {notice && <div className={"feedback feedback-" + noticeType} role={noticeType === "error" ? "alert" : "status"}><span className="feedback-icon">{noticeType === "success" ? <CheckCircle2 size={17}/> : noticeType === "error" ? <ShieldAlert size={17}/> : <Activity size={17}/>}</span><span>{notice}</span><button aria-label="Dismiss message" onClick={() => setNotice("")}><X size={16}/></button></div>}
 
@@ -264,40 +244,30 @@ function StageProgress({stage}:{stage:StageKey}) {
  return <div className="stage-progress" aria-label={"Current stage "+(idx+1)+" of 5"}>{stageList.map((s,i)=><div key={s.key} className={"stage-progress-step "+(i<idx?"complete ":i===idx?"current":"")}><span className="progress-node">{i<idx?<Check size={13}/>:s.number}</span><span className="progress-caption">{s.short}</span></div>)}</div>;
 }
 function OverviewView({runs,activeRun,onCreate,onOpen,onViewRuns,onImport,importBusy,onContinue}:{runs:Run[];activeRun:Run|null;onCreate:()=>void;onOpen:(r:Run)=>void;onViewRuns:()=>void;onImport:(e:ChangeEvent<HTMLInputElement>)=>void;importBusy:boolean;onContinue:()=>void}) {
- return <div className="view-stack overview-view">
-  <section className="overview-hero">
-   <div className="overview-hero-copy">
-    <div className="eyebrow">IVALTh / WELLBEING RESEARCH</div>
-    <h1>Understand the problem before building the product.</h1>
-    <p>Research human wellbeing concerns, verify the evidence, and decide what deserves validation. Each step requires a clear human decision.</p>
-    <div className="overview-hero-actions">
-     <button className="primary-button" onClick={onCreate}><Plus size={16}/> New research run</button>
-     <a href="/research-engine" className="secondary-button"><FlaskConical size={16}/> AI Research Engine <ArrowRight size={14}/></a>
-     {activeRun&&<button className="subtle-button overview-resume" onClick={onContinue}>Resume current run <ChevronRight size={15}/></button>}
-    </div>
-    <p className="overview-hero-note"><ShieldAlert size={15}/><span>Findings remain provisional until sources are reviewed and a human approves the next step.</span></p>
-   </div>
+ const completedDecisions = runs.reduce((sum, run) => sum + run.decisions.length, 0);
+ const candidateCount = runs.reduce((sum, run) => sum + run.concerns.length, 0);
+ const selectedCount = runs.reduce((sum, run) => sum + run.concerns.filter(c => c.selected).length, 0);
+ const activeStage = activeRun ? stageFor(activeRun.stage) : null;
+ return <div className="studio-dashboard-v2">
+  <section className="studio-dashboard-heading-v2"><div><div className="studio-eyebrow-v2"><span/> WELLBEING RESEARCH / COMMAND CENTRE</div><h1>Find the human problem.<br/><em>Prove it matters.</em></h1><p>Trace concerns from early signals to validated opportunities. Keep observed harm, public worry, modelled exposure and solution performance separate.</p></div><div className="studio-heading-aside-v2"><span className="studio-heading-aside-label-v2">RESEARCH STANDARD</span><strong>Evidence before opportunity.</strong><span>Source traceability · Counterevidence · Human decision gates</span></div></section>
+  <section className="studio-metric-grid-v2" aria-label="Research workspace summary">
+   <article className="studio-metric-card-v2 studio-metric-primary-v2"><span className="studio-metric-label-v2">RESEARCH RUNS</span><strong>{runs.length.toString().padStart(2,"0")}</strong><small>Scopes being investigated</small><span className="studio-metric-icon-v2"><FolderOpen size={19}/></span></article>
+   <article className="studio-metric-card-v2"><span className="studio-metric-label-v2">CANDIDATE PROBLEMS</span><strong>{candidateCount.toString().padStart(2,"0")}</strong><small>Not automatically validated</small><span className="studio-metric-icon-v2"><Activity size={19}/></span></article>
+   <article className="studio-metric-card-v2"><span className="studio-metric-label-v2">SELECTED FOR REVIEW</span><strong>{selectedCount.toString().padStart(2,"0")}</strong><small>Chosen for deeper assessment</small><span className="studio-metric-icon-v2"><Target size={19}/></span></article>
+   <article className="studio-metric-card-v2"><span className="studio-metric-label-v2">HUMAN DECISIONS</span><strong>{completedDecisions.toString().padStart(2,"0")}</strong><small>Recorded in this browser</small><span className="studio-metric-icon-v2"><ClipboardCheck size={19}/></span></article>
   </section>
-  <section className="surface-panel overview-recent-panel">
-   <div className="panel-heading">
-    <div><h2>Recent research</h2><p>{runs.length ? "Continue an existing run or open its latest stage." : "Your research runs will appear here."}</p></div>
-    <button className="text-button" onClick={onViewRuns}>All runs <ArrowRight size={14}/></button>
-   </div>
-   {runs.length===0
-    ? <EmptyState icon={<FolderOpen size={21}/>} title="No research yet" description="Create a run to define the research question, population and time horizon." action={<button className="primary-button" onClick={onCreate}><Plus size={15}/> Create first run</button>}/>
-    : <div className="run-list">{runs.slice(0,5).map(r=><RunRow key={r.id} run={r} active={r.id===activeRun?.id} onOpen={()=>onOpen(r)}/>)}</div>}
+  <section className="studio-dashboard-grid-v2">
+   <article className="studio-launch-card-v2"><div className="studio-launch-topline-v2"><span className="studio-launch-index-v2">01 / START HERE</span><span className="studio-launch-status-v2"><span/> HUMAN-LED</span></div><div className="studio-launch-icon-v2"><FlaskConical size={21}/></div><h2>{activeRun ? "Continue the investigation." : "Start with a clear question."}</h2><p>{activeRun ? "Pick up where the active run stopped. Review its current gate before moving forward." : "Define the wellbeing question, population, geography and time horizon before scanning for concerns."}</p>{activeRun && <div className="studio-current-run-v2"><span>ACTIVE RESEARCH RUN</span><strong>{activeRun.title}</strong><small>{activeStage?.number} / 04 · {activeStage?.title}</small></div>}<div className="studio-launch-actions-v2"><button className="studio-launch-primary-v2" onClick={activeRun ? onContinue : onCreate}>{activeRun ? "Resume research" : "Create research run"} <ArrowRight size={16}/></button><a href="/research-engine" className="studio-launch-secondary-v2"><FlaskConical size={16}/> Open AI Research Engine</a></div><div className="studio-launch-foot-v2"><ShieldAlert size={14}/> No model output is treated as a validated finding without source review.</div></article>
+   <article className="studio-pipeline-card-v2"><div className="studio-section-kicker-v2">THE METHOD</div><div className="studio-pipeline-heading-v2"><h2>From concern to product</h2><span>5 gated stages</span></div><p className="studio-pipeline-intro-v2">Advance only when the evidence supports the next decision.</p><div className="studio-pipeline-list-v2">{stageList.map((stage, index) => { const Icon = [HeartPulse, Activity, ListChecks, Target, FlaskConical][index]; const isCurrent = activeRun ? activeRun.stage === stage.key : index === 0; const isPast = activeRun ? stageList.findIndex(s => s.key === activeRun.stage) > index : false; return <button key={stage.key} className={"studio-pipeline-row-v2" + (isCurrent ? " current" : "") + (isPast ? " complete" : "")} onClick={() => goto(stage.title)}><span className="studio-pipeline-node-v2">{isPast ? <Check size={14}/> : <Icon size={15}/>}</span><span className="studio-pipeline-copy-v2"><strong>{stage.title}</strong><small>{stage.description}</small></span><ArrowRight size={15} className="studio-pipeline-arrow-v2"/></button>; })}</div><div className="studio-pipeline-foot-v2"><span/> UNKNOWN stays unknown until evidence is found.</div></article>
   </section>
-  <details className="overview-utility">
-   <summary>Import Radar findings (JSON)</summary>
-   <p>Import structured findings for review. Imported claims remain unverified until checked against their original sources.</p>
-   <label className="secondary-button upload-button">{importBusy?"Importing…":"Choose JSON file"}<input type="file" accept="application/json,.json" disabled={importBusy} onChange={onImport} hidden/></label>
-   <span className="muted-note">JSON only · Missing evidence remains UNKNOWN</span>
-  </details>
-  <div className="local-data-note"><ShieldAlert size={14}/><span><strong>Prototype storage.</strong> Research Studio runs are saved in this browser only and are not synced across devices. Do not enter confidential data.</span></div>
+  <section className="studio-recent-v2"><div className="studio-section-header-v2"><div><div className="studio-section-kicker-v2">YOUR WORK</div><h2>Research runs</h2><p>{runs.length ? "Open a run to inspect its current stage and evidence." : "Runs you create will appear here. Nothing is pre-populated with invented findings."}</p></div><button className="studio-view-all-v2" onClick={onViewRuns}>View all runs <ArrowRight size={15}/></button></div>
+   {runs.length === 0 ? <div className="studio-empty-state-v2"><span><FolderOpen size={22}/></span><div><strong>No research runs yet</strong><p>Start by naming the question you want to investigate.</p></div><button className="studio-empty-action-v2" onClick={onCreate}><Plus size={16}/> Create first run</button></div> : <div className="studio-run-grid-v2">{runs.slice(0,4).map(run => <button className={"studio-run-card-v2" + (run.id === activeRun?.id ? " active" : "")} key={run.id} onClick={() => onOpen(run)}><span className="studio-run-card-top-v2"><span className="studio-run-id-v2">{run.id.slice(0,8).toUpperCase()}</span><ArrowRight size={15}/></span><strong>{run.title}</strong><p>{run.scope}</p><span className="studio-run-card-bottom-v2"><span>{stageFor(run.stage).number} / 04</span><span>{run.concerns.length} candidates</span></span></button>)}</div>}
+  </section>
+  <section className="studio-utility-row-v2"><div><div className="studio-section-kicker-v2">DATA IN / DATA OUT</div><strong>Import external Radar findings</strong><p>Bring in a structured JSON result. Imported claims stay unverified until the original sources are checked.</p></div><label className="studio-import-button-v2">{importBusy ? "Importing…" : "Choose JSON file"}<input type="file" accept="application/json,.json" disabled={importBusy} onChange={onImport} hidden/></label></section>
+  <footer className="studio-dashboard-footer-v2"><span>iVALTH RESEARCH STUDIO</span><span>Prototype storage: browser-local · Do not enter confidential data</span></footer>
  </div>;
 }
-={o.value} checked={decision===o.value} onChange={()=>setDecision(o.value)}/><span className="gate-option-copy"><strong>{o.label}</strong><small>{o.help}</small></span>{decision===o.value&&<CheckCircle2 size={17} className="option-check"/>}</label>)}</div><Field label="Decision rationale" hint="Record why this is the right next step. Required to save the decision."><textarea rows={3} value={rationale} onChange={e=>setRationale(e.target.value)} placeholder="Evidence considered, uncertainties, and why you chose this action…"/></Field>{stage==="world_concern_radar"&&<div className="selection-summary">{selectedCount} problem{selectedCount===1?"":"s"} selected for deeper research</div>}<button className="primary-button gate-submit" onClick={onDecision}>Record decision <ArrowRight size={16}/></button><p className="gate-footnote">Saved locally in this browser · Not yet server-enforced</p></section>;
-}
+
 function WellbeingView({run,decision,setDecision,rationale,setRationale,onDecision,onCreate}:{run:Run|null;decision:string;setDecision:(s:string)=>void;rationale:string;setRationale:(s:string)=>void;onDecision:()=>void;onCreate:()=>void}) {
  if(!run)return <MissingRun title="Define the wellbeing scope" description="A research run establishes the question and the boundaries before any concerns are detected." onCreate={onCreate}/>;
  const isCurrent=run.stage==="wellbeing_research";
