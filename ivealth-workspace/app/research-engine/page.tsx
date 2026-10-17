@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import type { CSSProperties, FormEvent } from "react";
-import { createClient } from "@/lib/supabase/client";
 import { House, Microscope } from "lucide-react";
 import "./research-engine.css";
 
@@ -100,7 +99,7 @@ type ResearchJob = {
   result?: ResearchResult;
   created_at?: string;
 };
-type ConnectionState = "checking" | "ready" | "config_missing" | "signed_out" | "error";
+type ConnectionState = "checking" | "ready" | "config_missing" | "error";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
@@ -178,7 +177,7 @@ function downloadJson(name: string, value: unknown) {
 
 export default function ResearchEnginePage() {
   const [connection, setConnection] = useState<ConnectionState>("checking");
-  const [email, setEmail] = useState("");
+  const [workspaceId, setWorkspaceId] = useState("");
   const [title, setTitle] = useState("World concern scan");
   const [question, setQuestion] = useState("");
   const [geography, setGeography] = useState("Global");
@@ -197,58 +196,26 @@ export default function ResearchEnginePage() {
       return;
     }
     try {
-      const supabase = createClient();
-      let alive = true;
-      supabase.auth.getUser().then(({ data, error: authError }) => {
-        if (!alive) return;
-        if (authError) {
-          setConnection("error");
-          setError(authError.message);
-          return;
-        }
-        if (!data.user) {
-          setConnection("signed_out");
-          return;
-        }
-        setEmail(data.user.email ?? "");
-        setConnection("ready");
-      }).catch((authError: unknown) => {
-        if (!alive) return;
-        setConnection("error");
-        setError(authError instanceof Error ? authError.message : "Could not check the signed-in session.");
-      });
-      const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-        if (!alive) return;
-        if (session?.user) {
-          setEmail(session.user.email ?? "");
-          setConnection("ready");
-        } else {
-          setConnection("signed_out");
-        }
-      });
-      return () => {
-        alive = false;
-        listener.subscription.unsubscribe();
-      };
-    } catch (authError) {
-      setConnection("config_missing");
-      setError(authError instanceof Error ? authError.message : "Supabase is not configured.");
+      const storageKey = "ivealth_guest_workspace_id";
+      let id = localStorage.getItem(storageKey) ?? "";
+      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)) {
+        id = crypto.randomUUID();
+        localStorage.setItem(storageKey, id);
+      }
+      setWorkspaceId(id);
+      setConnection("ready");
+    } catch {
+      setConnection("error");
+      setError("This browser could not create a local workspace. Enable browser storage and reload.");
     }
   }, []);
 
   useEffect(() => {
-    if (connection !== "ready") return;
+    if (connection !== "ready" || !workspaceId) return;
     let active = true;
     void (async () => {
-      const supabase = createClient();
-      const { data } = await supabase.auth.getSession();
-      if (!data.session?.access_token) return;
       const response = await fetch(supabaseUrl + "/functions/v1/ivealth-research-service/jobs", {
-        headers: {
-          apikey: supabaseKey,
-          Authorization: "Bearer " + data.session.access_token,
-          "Content-Type": "application/json",
-        },
+        headers: { apikey: supabaseKey, "x-workspace-id": workspaceId, "Content-Type": "application/json" },
       });
       const body = await response.json().catch(() => ({}));
       if (!active || !response.ok) return;
@@ -257,17 +224,14 @@ export default function ResearchEnginePage() {
       if (active) setRecentJobs([]);
     });
     return () => { active = false; };
-  }, [connection]);
+  }, [connection, workspaceId]);
 
   async function getAuthHeaders(): Promise<Record<string, string>> {
-    if (!supabaseUrl || !supabaseKey) throw new Error("Supabase configuration is missing.");
-    const supabase = createClient();
-    const { data, error: sessionError } = await supabase.auth.getSession();
-    if (sessionError) throw sessionError;
-    if (!data.session?.access_token) throw new Error("Your session has expired. Sign in again.");
+    if (!supabaseUrl || !supabaseKey) throw new Error("The research service is not configured.");
+    if (!workspaceId) throw new Error("The local workspace is still initializing. Reload and retry.");
     return {
       apikey: supabaseKey,
-      Authorization: "Bearer " + data.session.access_token,
+      "x-workspace-id": workspaceId,
       "Content-Type": "application/json",
     };
   }
@@ -392,7 +356,7 @@ export default function ResearchEnginePage() {
         </div>
         <div style={{ ...cardStyle, padding: "10px 13px", minWidth: 190 }}>
           <div style={{ fontSize: 11, color: "var(--muted, #66766d)", marginBottom: 3 }}>SESSION</div>
-          <div style={{ fontSize: 13, fontWeight: 700 }}>{connection === "ready" ? (email || "Signed in") : connection === "checking" ? "Checking…" : connection === "signed_out" ? "Not signed in" : connection === "config_missing" ? "Needs configuration" : "Connection error"}</div>
+          <div style={{ fontSize: 13, fontWeight: 700 }}>{connection === "ready" ? "Open workspace" : connection === "checking" ? "Loading…" : connection === "config_missing" ? "Needs configuration" : "Connection error"}</div>
         </div>
       </header>
 
@@ -415,12 +379,6 @@ export default function ResearchEnginePage() {
         <h2 style={{ marginTop: 0, fontSize: 18 }}>Supabase configuration is missing</h2>
         <p style={mutedStyle}>Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in the workspace deployment, then redeploy. These are the public client URL and key; never put a service-role key in the browser.</p>
         <a href="/setup" style={{ color: "#215b48", fontWeight: 700 }}>Open setup instructions</a>
-      </section>}
-
-      {connection === "signed_out" && <section style={{ ...cardStyle, marginBottom: 20 }}>
-        <h2 style={{ marginTop: 0, fontSize: 18 }}>Sign in to use the research API</h2>
-        <p style={mutedStyle}>Research runs are saved to the authenticated user's Supabase record. The API does not accept anonymous requests.</p>
-        <a href="/login" style={{ display: "inline-block", ...buttonStyle, textDecoration: "none" }}>Sign in</a>
       </section>}
 
       {connection === "error" && <p role="alert" style={{ ...statusStyle, color: "#8d2c20", marginBottom: 18 }}>{error || "Unable to connect to Supabase."}</p>}
@@ -447,7 +405,7 @@ export default function ResearchEnginePage() {
             <h2 style={{ margin: "0 0 6px", fontSize: 19 }}>1. Define the research request</h2>
             <p style={{ ...mutedStyle, margin: 0 }}>Narrow scope improves the interpretability of the first pass. Trajectory should remain UNKNOWN when comparable historical measures are absent.</p>
           </div>
-          <span style={{ fontSize: 11, color: "var(--muted, #66766d)" }}>Saved to Supabase when submitted</span>
+          <span style={{ fontSize: 11, color: "var(--muted, #66766d)" }}>Saved to this browser workspace</span>
         </div>
         <form onSubmit={runResearch} style={{ display: "grid", gap: 14, marginTop: 20 }}>
           <label style={{ display: "grid", gap: 6, fontSize: 12, fontWeight: 700 }}>Run title
