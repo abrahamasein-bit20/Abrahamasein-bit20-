@@ -1,6 +1,7 @@
 "use client";
 
-import { ChangeEvent, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import type { ChangeEvent, ReactNode } from "react";
 import {
   Activity, ArrowRight, ArrowUpRight, BookOpen, Check, CheckCircle2,
   ChevronRight, ClipboardCheck, FileJson, FileText, FlaskConical,
@@ -227,13 +228,13 @@ export default function Home() {
   </div>;
 }
 
-function Field({label,hint,children}:{label:string;hint?:string;children:React.ReactNode}) {
+function Field({label,hint,children}:{label:string;hint?:string;children:ReactNode}) {
  return <label className="form-field"><span className="field-label">{label}</span>{hint&&<span className="field-hint">{hint}</span>}{children}</label>;
 }
 function NavButton({item,active,onClick}:{item:{label:View;icon:typeof LayoutDashboard};active:boolean;onClick:()=>void}) {
  const Icon=item.icon;return <button className={"primary-nav-item "+(active?"active":"")} onClick={onClick}><Icon size={17}/><span>{item.label}</span>{active&&<span className="nav-active-mark"/>}</button>;
 }
-function PageIntro({eyebrow,title,description,action}:{eyebrow?:string;title:string;description:string;action?:React.ReactNode}) {
+function PageIntro({eyebrow,title,description,action}:{eyebrow?:string;title:string;description:string;action?:ReactNode}) {
  return <div className="page-intro"><div>{eyebrow&&<div className="eyebrow">{eyebrow}</div>}<h1>{title}</h1><p>{description}</p></div>{action&&<div className="intro-action">{action}</div>}</div>;
 }
 function StageProgress({stage}:{stage:StageKey}) {
@@ -258,7 +259,7 @@ function RunRow({run,active,onOpen}:{run:Run;active:boolean;onOpen:()=>void}) {
  const stage=stageFor(run.stage);const idx=stageList.findIndex(s=>s.key===run.stage);
  return <button className={"run-row "+(active?"run-row-active":"")} onClick={onOpen}><span className="run-row-mark"><FolderOpen size={17}/></span><span className="run-row-content"><strong>{run.title}</strong><small>{run.scope}</small><span className="run-row-meta"><span className="stage-chip">{stage.number} · {stage.title}</span><span>{run.concerns.length} problem{run.concerns.length===1?"":"s"}</span></span><span className="run-progress"><i style={{width:((idx+1)/5*100)+"%"}}/></span></span><ChevronRight size={17} className="run-row-chevron"/></button>;
 }
-function EmptyState({icon,title,description,action}:{icon:React.ReactNode;title:string;description:string;action?:React.ReactNode}) {
+function EmptyState({icon,title,description,action}:{icon:ReactNode;title:string;description:string;action?:ReactNode}) {
  return <div className="empty-state"><span className="empty-icon">{icon}</span><h3>{title}</h3><p>{description}</p>{action}</div>;
 }
 function RunsView({runs,query,setQuery,activeId,onOpen,onCreate}:{runs:Run[];query:string;setQuery:(s:string)=>void;activeId:string;onOpen:(r:Run)=>void;onCreate:()=>void}) {
@@ -272,7 +273,7 @@ function WellbeingView({run,decision,setDecision,rationale,setRationale,onDecisi
  const isCurrent=run.stage==="wellbeing_research";
  return <StagePage stage="wellbeing_research" run={run} lead="Set the boundaries before detection" intro="The scope determines what the Radar should look for, which populations it should consider, and what evidence can support a conclusion."><div className="detail-grid"><Detail label="Research question" value={run.scope}/><Detail label="Population" value={run.population||"Not specified"}/><Detail label="Geography" value={run.geography}/><Detail label="Time horizon" value={run.horizon}/></div><div className="research-note"><HeartPulse size={18}/><div><strong>Scope check</strong><p>Confirm the wellbeing constructs, populations, contexts, time horizon, exclusions and evidence boundaries. Do not start detection until this scope is approved.</p></div></div>{isCurrent?<StageGate stage="wellbeing_research" decision={decision} setDecision={setDecision} rationale={rationale} setRationale={setRationale} onDecision={onDecision} options={[{value:"approved",label:"Approve scope",help:"Scope is clear enough to begin detection."},{value:"revise",label:"Request revision",help:"Change the research question or scope first."},{value:"stop",label:"Stop this run",help:"Do not continue this research run."}]}/>:<DecisionHistory items={run.decisions.filter(d=>d.stage==="wellbeing_research")}/>}</StagePage>;
 }
-function StagePage({stage,run,lead,intro,children}:{stage:StageKey;run:Run;lead:string;intro:string;children:React.ReactNode}) {
+function StagePage({stage,run,lead,intro,children}:{stage:StageKey;run:Run;lead:string;intro:string;children:ReactNode}) {
  return <div className="view-stack"><PageIntro eyebrow={"STAGE "+stageFor(stage).number+" / 04"} title={stageFor(stage).title} description={intro}/><StageProgress stage={stage}/><div className="run-context"><span className="run-context-icon"><FolderOpen size={17}/></span><span><small>ACTIVE RESEARCH RUN</small><strong>{run.title}</strong></span><span className="run-context-right">{run.concerns.length} candidate{run.concerns.length===1?"":"s"}</span></div><div className="stage-lead"><div><span className="stage-lead-kicker">CURRENT TASK</span><h2>{lead}</h2></div><p>{stageFor(stage).description}</p></div>{children}</div>;
 }
 function RadarView({run,candidate,setCandidate,open,setOpen,onAdd,selected,onToggle,decision,setDecision,rationale,setRationale,onDecision,onCreate}:{run:Run|null;candidate:{title:string;population:string;geography:string;signal:string;evidence:string;alternative:string};setCandidate:(v:{title:string;population:string;geography:string;signal:string;evidence:string;alternative:string})=>void;open:boolean;setOpen:(v:boolean)=>void;onAdd:()=>void;selected:Concern[];onToggle:(id:string)=>void;decision:string;setDecision:(s:string)=>void;rationale:string;setRationale:(s:string)=>void;onDecision:()=>void;onCreate:()=>void}) {
