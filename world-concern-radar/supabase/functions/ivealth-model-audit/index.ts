@@ -37,6 +37,13 @@ Deno.serve(async (req: Request) => {
   const body = await req.json().catch(() => null);
   const jobId = typeof body?.job_id === "string" ? body.job_id.trim() : "";
   if (!jobId || jobId.length > 100) return reply({ error: "Provide a valid job_id." }, 400);
+  if (body?.confirm_external_processing !== true) {
+    return reply({
+      error: "Explicit consent is required before sending this research artifact to an external model provider.",
+      required_confirmation: "confirm_external_processing: true",
+      notice: "The external provider receives the saved research artifact. Some free inference endpoints log requests or may use data for provider improvement. Do not submit personal or confidential information unless its handling terms have been reviewed and approved.",
+    }, 400);
+  }
 
   const baseUrl = Deno.env.get("MODEL_AUDIT_BASE_URL") || "https://openrouter.ai/api/v1/chat/completions";
   const apiKey = Deno.env.get("MODEL_AUDIT_API_KEY");
@@ -66,8 +73,10 @@ Deno.serve(async (req: Request) => {
     return reply({ error: "This job has no completed research artifact to audit." }, 409);
   }
 
+  const artifactJson = JSON.stringify(job.result);
+  const artifactTruncated = artifactJson.length > 70000;
   const auditPrompt = `You are an adversarial quality-control reviewer for an evidence-led wellbeing research system.
-Review the supplied research artifact and return JSON only with this schema:
+Review the supplied research artifact and return JSON only with this schema. If ARTIFACT_TRUNCATED is true, return status audit_limited and state that later content was omitted:
 {
   "status": "reviewed_with_flags" | "no_internal_flags" | "audit_limited",
   "scope_note": "This is a text/structure audit only, not independent source verification.",
@@ -99,8 +108,9 @@ Rules:
 - Missing evidence is UNKNOWN, not evidence of absence.
 - Do not rank candidates, calculate an overall score, select a candidate, or approve the research.
 - If the artifact is too large or incomplete, return audit_limited and state why.
+ARTIFACT_TRUNCATED: ${artifactTruncated}
 RESEARCH ARTIFACT:
-${JSON.stringify(job.result).slice(0, 70000)}`;
+${artifactJson.slice(0, 70000)}`;
 
   try {
     const response = await fetch(baseUrl, {
@@ -138,6 +148,19 @@ ${JSON.stringify(job.result).slice(0, 70000)}`;
     } catch {
       return reply({ error: "The model audit provider did not return valid JSON.", output_excerpt: output.slice(0, 500) }, 502);
     }
+
+    if (!audit || typeof audit !== "object" || Array.isArray(audit) || typeof audit.status !== "string" || !Array.isArray(audit.findings)) {
+      return reply({ error: "The model audit provider returned JSON that did not match the required audit shape." }, 502);
+    }
+    const safeLimitations = Array.isArray(audit.limitations)
+      ? audit.limitations.filter((item): item is string => typeof item === "string").map((item) => item.slice(0, 500)).slice(0, 50)
+      : [];
+    if (artifactTruncated) {
+      audit.status = "audit_limited";
+      safeLimitations.push("The input artifact was truncated to 70,000 characters before review; later content may not have been assessed.");
+    }
+    audit.findings = audit.findings.slice(0, 100);
+    audit.limitations = safeLimitations;
 
     const previousResult = job.result as Record<string, unknown>;
     const savedAudit = {
