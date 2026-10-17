@@ -76,6 +76,23 @@ Free model usually means model weights or a limited hosted quota—not guarantee
 
 These services can support a prototype, but availability, model selection, rate limits, retention and terms can change. Store provider/model identifiers and request status per run.
 
+### First free model to benchmark
+
+Recommended first **prototype benchmark target**, not a production quality endorsement: `nvidia/nemotron-3-ultra-550b-a55b:free` through OpenRouter.
+
+- OpenRouter currently lists the model at $0 input/output token pricing and describes it as a 550B-total / 55B-active mixture-of-experts model for reasoning and agentic workflows: https://openrouter.ai/nvidia/nemotron-3-ultra-550b-a55b%3Afree
+- The provider page reports an Artificial Analysis Omniscience accuracy of 22.6% and non-hallucination rate of 70.3%; these are broad benchmark measures, not an iValth evidence-audit score. Its reported recent availability varies and has been below 100%.
+- The free endpoint does not enforce structured JSON output. The Edge Function parses and shape-checks returned JSON, but malformed output can still fail.
+- The free endpoint's own notice says usage is logged and may be used to improve NVIDIA products/services, and asks users not to submit confidential information or personal data. Therefore, only run it on synthetic or public/non-confidential artifacts unless you first review the provider terms and explicitly approve the data transfer.
+- This model must not be described as an evidence verifier. It receives no browsing tool in this function and cannot independently open source URLs.
+
+For a first controlled test, set these Supabase Edge Function secrets:
+- `MODEL_AUDIT_API_KEY`: OpenRouter API key.
+- `MODEL_AUDIT_MODEL`: `nvidia/nemotron-3-ultra-550b-a55b:free`.
+- `MODEL_AUDIT_BASE_URL`: optional; default is `https://openrouter.ai/api/v1/chat/completions`.
+
+The source requires every POST request to include `confirm_external_processing: true`. This is a per-request acknowledgement, not a claim that the free endpoint is suitable for confidential data. Current OpenRouter free-tier pricing/limits: https://openrouter.ai/pricing/
+
 ## Proposed integration order
 
 ### Phase A — establish baseline
