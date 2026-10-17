@@ -207,7 +207,7 @@ export default function Home() {
       {view === "Opportunity Validation" && <ValidationView run={activeRun} stage="opportunity_validation" decision={decision} setDecision={setDecision} rationale={rationale} setRationale={setRationale} onDecision={recordDecision} onCreate={openCreate}/>}
       {view === "Product Development" && <ValidationView run={activeRun} stage="product_development" decision={decision} setDecision={setDecision} rationale={rationale} setRationale={setRationale} onDecision={recordDecision} onCreate={openCreate}/>}
       {view === "Product Development Box" && <ProductDevelopmentBox runs={runs} onOpen={r => { setActiveRunId(r.id); goto("Product Development"); }} />}
-      {view === "Evidence Library" && <EvidenceView runs={runs}/}
+      {view === "Evidence Library" && <EvidenceView runs={runs}/>}
       {view === "Decision log" && <DecisionLog run={activeRun} runs={runs} onSelect={r=>setActiveRunId(r.id)}/>}
 
       {showNew && <div className="sheet-backdrop"><section className="create-sheet" role="dialog" aria-modal="true" aria-labelledby="create-title">
