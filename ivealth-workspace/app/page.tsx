@@ -25,6 +25,7 @@ export default function Home() {
  const [loaded,setLoaded] = useState(false);
  const [showNew,setShowNew] = useState(false);
  const [showMobileMore,setShowMobileMore] = useState(false);
+ const [importBusy,setImportBusy] = useState(false);
  const [draft,setDraft] = useState<Run|null>(null);
  const [candidate,setCandidate] = useState({title:"",population:"",geography:"Global",signal:"",evidence:"",alternative:""});
  const [decision,setDecision] = useState("approved");
@@ -45,6 +46,47 @@ export default function Home() {
  const recordDecision = () => {if(!activeRun){setNotice("Create or select a research run first.");return;}if(!rationale.trim()){setNotice("Enter the reason for this decision.");return;}if(activeRun.stage==="world_concern_radar"&&decision==="selected_items"&&selected.length===0){setNotice("Select at least one problem ID before advancing.");return;}if(activeRun.stage==="world_concern_radar"&&decision==="selected_items"&&selected.length>0){ } else if(activeRun.stage==="world_concern_radar"&&decision==="approved"){setNotice("For the Radar, choose Selected items, Request more evidence, Revise, or Stop.");return;}const d:Decision={stage:activeRun.stage,decision,rationale:rationale.trim(),at:new Date().toISOString(),selectedIds:selected.map(c=>c.id)};updateRun(r=>({...r,decisions:[...r.decisions,d],stage:decision==="approved"||decision==="selected_items"?nextStage(r.stage):r.stage}));setRationale("");setNotice(decision==="approved"||decision==="selected_items"?"Decision recorded. Workflow advanced to the next stage.":"Decision recorded. The workflow remains at the current stage.");if(decision==="approved"||decision==="selected_items")setView(stageList[Math.min(stageList.findIndex(s=>s.key===activeRun.stage)+1,stageList.length-1)].title);};
  const exportRun = () => {if(!activeRun)return;const text=JSON.stringify(activeRun,null,2);setExportText(text);};
  const downloadExport = () => {if(!exportText)return;const blob=new Blob([exportText],{type:"application/json"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=(activeRun?.title||"ivealth-research").toLowerCase().replace(/[^a-z0-9]+/g,"-")+".json";a.click();URL.revokeObjectURL(url);};
+ const importPluginFile = async (file:File) => {
+  setImportBusy(true);
+  try {
+   const raw = JSON.parse(await file.text());
+   const root = raw?.run && typeof raw.run === "object" ? raw.run : raw;
+   const candidateRows = Array.isArray(root.concerns) ? root.concerns : Array.isArray(root.candidates) ? root.candidates : Array.isArray(root.problems) ? root.problems : Array.isArray(root.items) ? root.items : [];
+   const importedConcerns: Concern[] = candidateRows.map((item:any,index:number)=>({
+    id: String(item.id || item.problem_id || item.claim_id || ("P-IMPORT-"+(index+1))),
+    title: String(item.title || item.problem_statement || item.problem || item.name || "Untitled candidate"),
+    population: String(item.population || item.affected_population || item.context || "Not specified"),
+    geography: String(item.geography || root.geography || "Unknown"),
+    signal: String(item.signal || item.observed_signal || item.evidence_class || "Not classified"),
+    evidence: typeof item.evidence === "string" ? item.evidence : typeof item.evidence_summary === "string" ? item.evidence_summary : Array.isArray(item.claims) ? JSON.stringify(item.claims) : item.source_ids ? "Source IDs: "+JSON.stringify(item.source_ids) : "UNKNOWN — source-level evidence details not supplied",
+    alternative: String(item.counterevidence || item.alternative_explanation || item.alternative || "Not supplied"),
+    selected: false,
+    status: String(item.status || item.validation_status || "Imported — not independently verified")
+   }));
+   const hasRunShape = Array.isArray(root.concerns) && Array.isArray(root.decisions) && root.stage;
+   const r:Run = hasRunShape ? {...root,id:crypto.randomUUID(),created:new Date().toISOString()} : {
+    id:crypto.randomUUID(),
+    title:String(root.title || root.run_title || root.research_title || root.dossier_title || file.name.replace(/\\.json$/i,"")),
+    scope:String(root.scope || root.objective || root.research_question || root.brief || "Imported Radar results — research question not supplied"),
+    population:String(root.population || root.target_population || "Not specified"),
+    geography:String(root.geography || "Global"),
+    horizon:String(root.horizon || root.time_window || root.period || "Not specified"),
+    created:new Date().toISOString(),
+    stage:"world_concern_radar",
+    concerns:importedConcerns,
+    decisions:[]
+   };
+   if (!r.concerns) r.concerns=importedConcerns;
+   if (!r.title.trim()) r.title="Imported Radar results";
+   if (!r.scope.trim()) r.scope="Imported results — research question not supplied";
+   setRuns(prev=>[r,...prev]);
+   setActiveRunId(r.id);
+   setView("World Concern Radar");
+   setNotice("Imported "+r.concerns.length+" candidate(s). Imported records are not automatically verified; check source URLs and claim-level evidence before approval.");
+  } catch {
+   setNotice("Import failed. Choose a valid JSON export from the World Concern Radar. No data was imported.");
+  } finally { setImportBusy(false); }
+ };
  const filteredRuns = useMemo(()=>runs.filter(r=>(r.title+" "+r.scope).toLowerCase().includes(filter.toLowerCase())),[runs,filter]);
  const activeStageIndex = activeRun?stageList.findIndex(s=>s.key===activeRun.stage):0;
  const stageHistory = activeRun?.decisions.slice().reverse() || [];
@@ -59,7 +101,7 @@ export default function Home() {
    <div className="notice"><span>ⓘ</span><div><strong>Prototype data handling</strong><br/>This version saves runs in this browser only. Data is not shared with Supabase and may be lost if browser storage is cleared. Do not use confidential or personal data until authentication and protected persistence are implemented.</div></div>
    {notice&&<div className="notice" role="status" style={{marginTop:12,background:"#fbf2e5",borderColor:"#f0dfc5",color:"#76501e"}}><div>{notice}</div><button className="btn" onClick={()=>setNotice("")}>Dismiss</button></div>}
    {view==="Overview"&&<><div className="grid stats"><div className="card"><div className="stat-label">Research runs</div><div className="stat-value">{runs.length}</div><div className="stat-note">Saved in this browser</div></div><div className="card"><div className="stat-label">Candidate problems</div><div className="stat-value">{runs.reduce((n,r)=>n+r.concerns.length,0)}</div><div className="stat-note">Across local research runs</div></div><div className="card"><div className="stat-label">Selected problems</div><div className="stat-value">{runs.reduce((n,r)=>n+r.concerns.filter(c=>c.selected).length,0)}</div><div className="stat-note">Reviewer-selected for deeper work</div></div><div className="card"><div className="stat-label">Recorded decisions</div><div className="stat-value">{runs.reduce((n,r)=>n+r.decisions.length,0)}</div><div className="stat-note">Decision history retained locally</div></div></div>
-    <div className="section-head"><div><div className="section-title">Research progression</div><div className="section-note">Five stages with explicit reviewer-controlled handoffs.</div></div><button className="btn btn-primary" onClick={()=>{setDraft(emptyRun());setShowNew(true);}}>+ New research run</button></div>
+    <div className="section-head"><div><div className="section-title">Research progression</div><div className="section-note">Five stages with explicit reviewer-controlled handoffs.</div></div><div className="header-actions"><label className="btn" style={{cursor:"pointer"}}>{importBusy?"Importing…":"Import Radar JSON"}<input type="file" accept="application/json,.json" disabled={importBusy} onChange={e=>{const f=e.target.files?.[0];if(f)void importPluginFile(f);e.currentTarget.value="";}} style={{display:"none"}}/></label><button className="btn btn-primary" onClick={()=>{setDraft(emptyRun());setShowNew(true);}}>+ New run</button></div></div>
     <div className="grid stages">{stageList.map(s=><button className="card stage-card" key={s.key} onClick={()=>setView(s.title)} style={{textAlign:"left",cursor:"pointer"}}><div className="stage-number">Stage {s.number}</div><div className="stage-symbol">{s.number==="00"?"◉":s.number==="01"?"⌁":s.number==="02"?"✓":s.number==="03"?"◇":"▦"}</div><div className="stage-name">{s.title}</div><div className="stage-desc">{s.short}</div><span className="tag">{s.gate}</span></button>)}</div>
     <div className="grid columns" style={{marginTop:24}}><section className="card"><div className="section-head" style={{marginTop:0}}><div><div className="section-title">Research register</div><div className="section-note">Runs and current workflow position.</div></div><input value={filter} onChange={e=>setFilter(e.target.value)} placeholder="Search runs" style={{maxWidth:170}}/></div>{filteredRuns.length===0?<div className="empty"><strong>No research runs yet</strong>Create a run to define the population, geography, research question and time horizon.<button className="btn btn-primary" style={{display:"block",margin:"14px auto 0"}} onClick={()=>{setDraft(emptyRun());setShowNew(true);}}>Create first research run</button></div>:<div className="list">{filteredRuns.map(r=><div className="list-row" key={r.id}><span className="dot"/><div style={{flex:1}}><div className="list-title">{r.title}</div><div className="list-desc">{r.scope}</div><div style={{marginTop:8}}><span className="tag">{stageList.find(s=>s.key===r.stage)?.title}</span> <span className="tag">{r.concerns.length} problems</span></div></div><button className="btn" onClick={()=>{setActiveRunId(r.id);setView(stageList.find(s=>s.key===r.stage)?.title||"Overview");}}>Open</button></div>)}</div>}</section>
      <section className="card"><div className="section-title">Research quality controls</div><div className="section-note">Applied to each stage.</div><div className="list" style={{marginTop:10}}>{[{t:"Claim-level traceability",d:"Every factual claim must have a source ledger entry or be marked as inference/unknown."},{t:"Counterevidence",d:"Record alternative explanations, contradictory findings and evidence that a problem is already well served."},{t:"Experienced vs worried",d:"Concern or search interest does not establish prevalence or harm."},{t:"No false precision",d:"Missing data stays unknown; candidate counts are not evidence of population magnitude."}].map(x=><div className="list-row" key={x.t}><span className="dot"/><div><div className="list-title">{x.t}</div><div className="list-desc">{x.d}</div></div></div>)}</div></section></div></>}
