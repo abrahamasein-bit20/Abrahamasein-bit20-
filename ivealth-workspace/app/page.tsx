@@ -209,7 +209,7 @@ export default function Home() {
         <div className="breadcrumbs"><span>iValth</span><ChevronRight size={14}/><strong>{view}</strong></div>
         <div className="toolbar-actions">
           <button className="theme-toggle" onClick={() => setTheme(v => v === "dark" ? "light" : "dark")} aria-label={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"} title={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}>{theme === "dark" ? <Sun size={16}/> : <Moon size={16}/>}<span>{theme === "dark" ? "Light mode" : "Dark mode"}</span></button>
-          {activeRun && <button className="subtle-button" onClick={exportRun}><FileJson size={15}/> Export run</button>
+          {activeRun && <button className="subtle-button" onClick={exportRun}><FileJson size={15}/> Export run</button>}
           <button className="primary-button" onClick={openCreate}><Plus size={17}/> <span>New research run</span></button>
         </div>
       </header>
