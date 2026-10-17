@@ -66,7 +66,7 @@ export default function Home() {
    const hasRunShape = Array.isArray(root.concerns) && Array.isArray(root.decisions) && root.stage;
    const r:Run = hasRunShape ? {...root,id:crypto.randomUUID(),created:new Date().toISOString()} : {
     id:crypto.randomUUID(),
-    title:String(root.title || root.run_title || root.research_title || root.dossier_title || file.name.replace(/\\.json$/i,"")),
+    title:String(root.title || root.run_title || root.research_title || root.dossier_title || file.name.replace(/\.json$/i,"")),
     scope:String(root.scope || root.objective || root.research_question || root.brief || "Imported Radar results — research question not supplied"),
     population:String(root.population || root.target_population || "Not specified"),
     geography:String(root.geography || "Global"),
