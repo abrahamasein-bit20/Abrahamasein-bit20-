@@ -293,3 +293,134 @@
   font-weight: 700;
   letter-spacing: .01em;
 }
+
+
+/* V2 alignment: make the AI Research Engine feel like part of the same product. */
+.research-engine-page {
+  --engine-bg: #f6f7f8;
+  --engine-ink: #17212b;
+  --engine-muted: #697784;
+  --engine-line: #e6e9ed;
+  --engine-teal: #4655d6;
+  background: var(--engine-bg) !important;
+  color: var(--engine-ink) !important;
+  font-family: Inter, "DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  font-size: 14px !important;
+}
+.research-engine-page .research-engine-header {
+  margin-bottom: 26px !important;
+  padding: 30px clamp(22px,4vw,62px) 32px !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: linear-gradient(115deg,#202842 0%,#303b67 58%,#4655a8 100%) !important;
+}
+.research-engine-page .research-engine-header::after {
+  opacity: .28;
+}
+.research-engine-page .research-engine-header a[href="/"] {
+  border-radius: 8px !important;
+  padding: 7px 10px !important;
+  font-size: 11px !important;
+}
+.research-engine-page .research-engine-header h1 {
+  font-size: clamp(28px,3.4vw,40px) !important;
+  letter-spacing: -1.5px !important;
+  font-weight: 760 !important;
+}
+.research-engine-page .research-engine-header p {
+  max-width: 720px !important;
+  font-size: 12px !important;
+  color: #d7ddec !important;
+  line-height: 1.8 !important;
+}
+.research-engine-page .research-engine-header > div:first-child > p:first-of-type {
+  color: #c0c8ff !important;
+  font-size: 9px !important;
+  letter-spacing: 1.5px !important;
+}
+.research-engine-page .research-engine-header > div:last-child {
+  min-width: 195px !important;
+  border-radius: 11px !important;
+  border-color: rgba(255,255,255,.16) !important;
+  background: rgba(15,20,38,.25) !important;
+  box-shadow: none !important;
+}
+.research-engine-page > section:not(.re-results),
+.research-engine-page .re-results,
+.research-engine-page [role="status"],
+.research-engine-page [role="alert"] {
+  width: calc(100% - clamp(28px,6vw,88px)) !important;
+  max-width: 1280px !important;
+}
+.research-engine-page > section:not(.re-results) {
+  margin-bottom: 15px !important;
+  padding: 21px !important;
+  border-radius: 13px !important;
+  border-color: #e6e9ed !important;
+  box-shadow: 0 1px 2px rgba(19,31,44,.025) !important;
+}
+.research-engine-page .re-results { gap: 13px !important; }
+.research-engine-page .re-results > section {
+  padding: 20px !important;
+  border-radius: 13px !important;
+  box-shadow: 0 1px 2px rgba(19,31,44,.025) !important;
+}
+.research-engine-page h2,
+.research-engine-page h3 {
+  color: #26323e !important;
+  font-family: Inter, "DM Sans", sans-serif !important;
+  letter-spacing: -.45px !important;
+}
+.research-engine-page h2 { font-size: 18px !important; font-weight: 750 !important; }
+.research-engine-page h3 { font-size: 13px !important; font-weight: 750 !important; }
+.research-engine-page label { color: #4a5662 !important; font-size: 11px !important; font-weight: 700 !important; }
+.research-engine-page input:not([type="checkbox"]):not([type="radio"]),
+.research-engine-page textarea,
+.research-engine-page select {
+  min-height: 40px !important;
+  padding: 10px 11px !important;
+  border-radius: 8px !important;
+  border-color: #dfe4ea !important;
+  background: #fff !important;
+  font-size: 11px !important;
+}
+.research-engine-page textarea { min-height: 100px !important; }
+.research-engine-page input:focus,
+.research-engine-page textarea:focus,
+.research-engine-page select:focus {
+  border-color: #aeb5f4 !important;
+  box-shadow: 0 0 0 3px rgba(70,85,214,.09) !important;
+}
+.research-engine-page button {
+  min-height: 36px !important;
+  border-radius: 8px !important;
+  font-size: 11px !important;
+}
+.research-engine-page a { color: #4655d6; }
+.research-engine-page article {
+  border-radius: 11px !important;
+  border-color: #e6e9ed !important;
+  box-shadow: 0 1px 2px rgba(19,31,44,.025) !important;
+}
+.research-engine-page .engine-capabilities span {
+  border-radius: 6px !important;
+  border-color: rgba(255,255,255,.17) !important;
+  background: rgba(255,255,255,.07) !important;
+  font-size: 9px !important;
+}
+@media (max-width: 760px) {
+  .research-engine-page .research-engine-header {
+    padding: 22px 18px 24px !important;
+    margin-bottom: 15px !important;
+  }
+  .research-engine-page > section:not(.re-results),
+  .research-engine-page .re-results,
+  .research-engine-page [role="status"],
+  .research-engine-page [role="alert"] {
+    width: calc(100% - 24px) !important;
+  }
+  .research-engine-page > section:not(.re-results),
+  .research-engine-page .re-results > section {
+    padding: 15px !important;
+  }
+}
