@@ -235,6 +235,54 @@ Deno.serve(async (req: Request) => {
       return json({ data }, 201);
     }
 
+
+    if (subresource === "approvals" && req.method === "GET") {
+      const { data, error } = await db.from("radar_stage_approvals").select("*")
+        .eq("run_id", runId).eq("user_id", userId).order("created_at", { ascending: true });
+      if (error) return fail(error.message, 500);
+      return json({ data });
+    }
+
+    if (subresource === "approvals" && req.method === "POST") {
+      const body = await req.json();
+      if (!isObject(body)) return fail("Request body must be a JSON object.");
+      const stage = textField(body, "stage", true, 60)!;
+      const decision = textField(body, "decision", true, 60)!;
+      const rationale = textField(body, "rationale", true, 5000)!;
+      const artifactVersion = textField(body, "artifact_version", true, 200)!;
+      const selectedIds = listField(body, "selected_item_ids");
+      const stages = ["wellbeing_research", "world_concern_radar", "problem_validation", "opportunity_validation", "product_development"];
+      const decisions = ["approved", "selected_items", "request_more_evidence", "revise", "stop", "rejected"];
+      const index = stages.indexOf(stage);
+      if (index < 0) return fail("Invalid stage.");
+      if (!decisions.includes(decision)) return fail("Invalid decision.");
+      if (decision === "selected_items" && selectedIds.length === 0) return fail("Select at least one item before approving a selection.");
+      if (stage !== "world_concern_radar" && decision === "selected_items") return fail("selected_items is only valid for the World Concern Radar gate.");
+      if (index > 0) {
+        const prerequisiteStage = stages[index - 1];
+        const requiredDecision = prerequisiteStage === "world_concern_radar" ? "selected_items" : "approved";
+        const { data: prior, error: priorError } = await db.from("radar_stage_approvals").select("id,decision")
+          .eq("run_id", runId).eq("user_id", userId).eq("stage", prerequisiteStage)
+          .eq("decision", requiredDecision).order("created_at", { ascending: false }).limit(1);
+        if (priorError) return fail(priorError.message, 500);
+        if (!prior || prior.length === 0) {
+          return fail(`Cannot approve ${stage}: ${prerequisiteStage} must first have an explicit ${requiredDecision} decision.`, 409);
+        }
+      }
+      if (decision === "approved" && stage === "world_concern_radar") {
+        return fail("The Radar gate must record selected_items, request_more_evidence, revise, stop, or rejected.");
+      }
+      const { data, error } = await db.from("radar_stage_approvals").insert({
+        run_id: runId, user_id: userId, approved_by: userId, stage, decision,
+        selected_item_ids: selectedIds, rationale, artifact_version: artifactVersion,
+      }).select("*").single();
+      if (error) return fail(error.message, 400);
+      await audit(runId, "stage.approval_recorded", "stage_approval", data.id, {
+        stage, decision, selected_item_count: selectedIds.length, artifact_version: artifactVersion,
+      });
+      return json({ data }, 201);
+    }
+
     return fail("Route not found or method not allowed.", 404);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unexpected error";
