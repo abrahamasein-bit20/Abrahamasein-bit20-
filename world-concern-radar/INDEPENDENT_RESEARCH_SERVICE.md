@@ -17,6 +17,33 @@ A standalone, request-triggered research API deployed as a Supabase Edge Functio
 
 Set `OPENAI_API_KEY` as a Supabase Edge Function secret for the selected project. Never put it in Vercel `NEXT_PUBLIC_*` variables or browser code. Optional secret `OPENAI_RESEARCH_MODEL` overrides the default `gpt-4.1`.
 
+## Optional second-model critique
+
+A separate function is available at:
+
+`https://xketsvvssnlhzyenmnsw.supabase.co/functions/v1/ivealth-model-audit`
+
+It accepts a saved `research_jobs.id`, retrieves the job only for the authenticated owner, sends the research artifact to a separately configured external critique model, and stores the critique at `result.model_audit`. It does not browse or independently verify source URLs. Findings are unverified review flags and require a human reviewer.
+
+Configure these Edge Function secrets in the Supabase Dashboard:
+- `MODEL_AUDIT_API_KEY`: the selected OpenAI-compatible provider API key.
+- `MODEL_AUDIT_MODEL`: an exact model ID.
+- `MODEL_AUDIT_BASE_URL`: optional; defaults to `https://openrouter.ai/api/v1/chat/completions`.
+
+For controlled prototyping with synthetic/public non-confidential data, the current first benchmark target is `nvidia/nemotron-3-ultra-550b-a55b:free`. OpenRouter currently lists it as free, but its free endpoint discloses that usage is logged and may be used for model/service improvement; its notice says not to upload confidential information or personal data. Read current terms before sending any non-public data. Free-tier access and availability may change. Model ID and terms reference: https://openrouter.ai/nvidia/nemotron-3-ultra-550b-a55b%3Afree
+
+Every audit POST requires per-request JSON consent, `confirm_external_processing: true`; this acknowledges the external transfer but does not make a provider appropriate for confidential data.
+
+Example body:
+```json
+{
+  "job_id": "UUID from a completed research job",
+  "confirm_external_processing": true
+}
+```
+
+The authenticated workspace UI route is `/research-engine`. It has been added on branch `research/open-model-stack`; it is not yet included in the current production frontend deployment.
+
 ## API
 
 Base URL:
