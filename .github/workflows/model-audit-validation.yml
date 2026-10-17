@@ -4,6 +4,8 @@ on:
   pull_request:
     paths:
       - "world-concern-radar/supabase/functions/ivealth-model-audit/**"
+      - "world-concern-radar/supabase/functions/ivealth-research-service/**"
+      - "ivealth-workspace/app/research-engine/page.tsx"
       - ".github/workflows/model-audit-validation.yml"
   push:
     branches:
@@ -28,8 +30,11 @@ jobs:
         with:
           deno-version: v2.x
 
-      - name: Type-check Edge Function
+      - name: Type-check model audit Edge Function
         run: deno check world-concern-radar/supabase/functions/ivealth-model-audit/index.ts
 
-      - name: Lint Edge Function
+      - name: Type-check primary research Edge Function
+        run: deno check world-concern-radar/supabase/functions/ivealth-research-service/index.ts
+
+      - name: Lint model audit Edge Function
         run: deno lint world-concern-radar/supabase/functions/ivealth-model-audit/index.ts
