@@ -6,31 +6,42 @@ export async function middleware(request: NextRequest) {
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   const path = request.nextUrl.pathname;
 
+  // Keep setup and auth callback reachable even when configuration is incomplete.
+  if (path === "/setup" || path === "/auth/callback") return NextResponse.next();
+
   if (!url || !key) {
-    if (path === "/setup") return NextResponse.next();
     return NextResponse.redirect(new URL("/setup", request.url));
   }
 
   let response = NextResponse.next({ request });
-  const supabase = createServerClient(url, key, {
-    cookies: {
-      getAll() { return request.cookies.getAll(); },
-      setAll(cookiesToSet) {
-        cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-        response = NextResponse.next({ request });
-        cookiesToSet.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
+  try {
+    const supabase = createServerClient(url, key, {
+      cookies: {
+        getAll() { return request.cookies.getAll(); },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
+          response = NextResponse.next({ request });
+          cookiesToSet.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
+        },
       },
-    },
-  });
+    });
 
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user && path !== "/login" && path !== "/auth/callback") {
-    const loginUrl = new URL("/login", request.url);
-    loginUrl.searchParams.set("next", path);
-    return NextResponse.redirect(loginUrl);
+    const { data: { user }, error } = await supabase.auth.getUser();
+    if (error) {
+      console.error("Supabase middleware auth check failed:", error.message);
+      return NextResponse.redirect(new URL("/setup?error=supabase_auth_check", request.url));
+    }
+    if (!user && path !== "/login") {
+      const loginUrl = new URL("/login", request.url);
+      loginUrl.searchParams.set("next", path);
+      return NextResponse.redirect(loginUrl);
+    }
+    if (user && path === "/login") return NextResponse.redirect(new URL("/", request.url));
+    return response;
+  } catch (error) {
+    console.error("Workspace middleware invocation failed:", error instanceof Error ? error.message : "Unknown middleware error");
+    return NextResponse.redirect(new URL("/setup?error=middleware", request.url));
   }
-  if (user && path === "/login") return NextResponse.redirect(new URL("/", request.url));
-  return response;
 }
 
 export const config = {
